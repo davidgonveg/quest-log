@@ -11,6 +11,7 @@ export interface TaskItemData {
   completed: boolean;
   goalTitle: string | null;
   dueDay: number | null;
+  streakBonus: number; // monedas extra si se completa ahora; 0 sin racha
 }
 
 export function TaskRow({
@@ -42,6 +43,9 @@ export function TaskRow({
             {task.goalTitle ? `${task.goalTitle} · ` : ""}
             {DIFFICULTY_LABELS[task.difficulty]} · +{task.xpReward} XP · +
             {task.coinReward} 🪙
+            {!task.completed && task.streakBonus > 0 && (
+              <span className="text-flame"> · 🔥 +{task.streakBonus}</span>
+            )}
           </p>
         </div>
         <span

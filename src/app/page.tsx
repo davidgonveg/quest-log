@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
-import { ensureCurrentWeek, getPendingPenalty, getUser } from "@/lib/week";
+import { ensureCurrentWeek, getPendingPenalty, getStreakInfo, getUser } from "@/lib/week";
 import { dayIndex } from "@/lib/week-logic";
 import type { Difficulty } from "@/lib/gamification";
+import { coinsWithStreak } from "@/lib/streak";
 import { PlayerHeader } from "@/components/dashboard/PlayerHeader";
 import { WeekProgress } from "@/components/dashboard/WeekProgress";
 import { TodayTasks } from "@/components/dashboard/TodayTasks";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
   const week = await ensureCurrentWeek();
-  const [user, penaltyWeek, fullWeek] = await Promise.all([
+  const [user, penaltyWeek, fullWeek, streak] = await Promise.all([
     getUser(),
     getPendingPenalty(),
     prisma.week.findUniqueOrThrow({
@@ -23,6 +24,7 @@ export default async function Dashboard() {
         tasks: { include: { weeklyGoal: { select: { title: true } } } },
       },
     }),
+    getStreakInfo(),
   ]);
 
   const penaltyEntry = penaltyWeek
@@ -50,6 +52,7 @@ export default async function Dashboard() {
       completed: t.completedAt !== null,
       goalTitle: t.weeklyGoal?.title ?? null,
       dueDay: t.dueDay,
+      streakBonus: coinsWithStreak(t.coinReward, streak.ifCompletedNow) - t.coinReward,
     }));
 
   const goals = fullWeek.weeklyGoals.map((g) => ({
@@ -72,7 +75,13 @@ export default async function Dashboard() {
         />
       )}
 
-      <PlayerHeader name={user.name} xp={user.xp} coins={user.coins} />
+      <PlayerHeader
+        name={user.name}
+        xp={user.xp}
+        coins={user.coins}
+        streak={streak.current}
+        lostStreak={streak.lost}
+      />
 
       <WeekProgress
         donePct={donePct}

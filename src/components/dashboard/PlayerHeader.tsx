@@ -5,12 +5,17 @@ export function PlayerHeader({
   name,
   xp,
   coins,
+  streak,
+  lostStreak,
 }: {
   name: string;
   xp: number;
   coins: number;
+  streak: number;
+  lostStreak: number;
 }) {
   const p = levelProgress(xp);
+  const broken = streak === 0;
 
   return (
     <header className="hud-chamfer rise-in border border-edge bg-surface p-4">
@@ -21,11 +26,30 @@ export function PlayerHeader({
             Nivel <span className="text-violet">{p.level}</span>
           </p>
         </div>
-        <div className="hud-chamfer-sm flex items-center gap-1.5 bg-gold-soft px-3 py-2">
-          <span aria-hidden>🪙</span>
-          <span className="font-display text-lg font-semibold text-gold">{coins}</span>
+        <div className="flex items-center gap-2">
+          <div
+            aria-label={
+              broken ? "Racha rota" : `Racha de ${streak} ${streak === 1 ? "día" : "días"}`
+            }
+            className={`hud-chamfer-sm flex items-center gap-1.5 px-3 py-2 ${
+              broken ? "bg-surface-2 text-muted grayscale" : "bg-flame-soft text-flame"
+            }`}
+          >
+            <span aria-hidden>🔥</span>
+            <span className="font-display text-lg font-semibold">{streak}</span>
+          </div>
+          <div className="hud-chamfer-sm flex items-center gap-1.5 bg-gold-soft px-3 py-2">
+            <span aria-hidden>🪙</span>
+            <span className="font-display text-lg font-semibold text-gold">{coins}</span>
+          </div>
         </div>
       </div>
+
+      {broken && lostStreak >= 2 && (
+        <p className="mt-2 text-xs text-muted">
+          Racha de {lostStreak} días perdida. Hoy puede empezar otra.
+        </p>
+      )}
 
       <div className="mt-3">
         <ProgressBar pct={p.pct} color="var(--gold)" shine />

@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
-import { ensureCurrentWeek } from "@/lib/week";
+import { ensureCurrentWeek, getStreakInfo } from "@/lib/week";
 import { DAY_NAMES } from "@/lib/week-logic";
 import type { Difficulty } from "@/lib/gamification";
+import { coinsWithStreak } from "@/lib/streak";
 import { createTask } from "@/actions/tasks";
 import { WeekTasks } from "@/components/tasks/WeekTasks";
 import type { TaskItemData } from "@/components/tasks/TaskRow";
@@ -12,13 +13,14 @@ export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
   const week = await ensureCurrentWeek();
-  const [tasks, weeklyGoals] = await Promise.all([
+  const [tasks, weeklyGoals, streak] = await Promise.all([
     prisma.task.findMany({
       where: { weekId: week.id },
       include: { weeklyGoal: { select: { title: true } } },
       orderBy: { title: "asc" },
     }),
     prisma.weeklyGoal.findMany({ where: { weekId: week.id }, orderBy: { title: "asc" } }),
+    getStreakInfo(),
   ]);
 
   const items: TaskItemData[] = tasks.map((t) => ({
@@ -30,6 +32,7 @@ export default async function TasksPage() {
     completed: t.completedAt !== null,
     goalTitle: t.weeklyGoal?.title ?? null,
     dueDay: t.dueDay,
+    streakBonus: coinsWithStreak(t.coinReward, streak.ifCompletedNow) - t.coinReward,
   }));
 
   return (

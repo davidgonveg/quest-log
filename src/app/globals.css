@@ -11,6 +11,8 @@
   --muted: #9490b8;
   --gold: #f5b93f;
   --gold-soft: #f5b93f26;
+  --flame: #ff8a3d;
+  --flame-soft: #ff8a3d26;
   --violet: #8b7cf6;
   --violet-soft: #8b7cf626;
   --green: #3ecf8e;
@@ -29,6 +31,8 @@
     --muted: #625d85;
     --gold: #c78a0a;
     --gold-soft: #c78a0a1f;
+    --flame: #cf5b0e;
+    --flame-soft: #cf5b0e1f;
     --violet: #6a58e8;
     --violet-soft: #6a58e81f;
     --green: #14915c;
@@ -47,6 +51,8 @@
   --color-muted: var(--muted);
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
+  --color-flame: var(--flame);
+  --color-flame-soft: var(--flame-soft);
   --color-violet: var(--violet);
   --color-violet-soft: var(--violet-soft);
   --color-green: var(--green);
