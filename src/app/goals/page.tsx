@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
 import { ensureCurrentWeek } from "@/lib/week";
+import { goalXpFrom, levelForXp, levelProgress } from "@/lib/gamification";
 import {
   archiveLongTermGoal,
+  completeLongTermGoal,
   completeWeeklyGoal,
   createLongTermGoal,
   createWeeklyGoal,
@@ -20,12 +22,27 @@ const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
 };
 
 export default async function GoalsPage() {
+  // Las tareas de cada weeklyGoal se necesitan para calcular la XP del objetivo.
+  const goalInclude = {
+    weeklyGoals: {
+      select: {
+        status: true,
+        tasks: { select: { completedAt: true, xpReward: true } },
+      },
+    },
+  } as const;
+
   const week = await ensureCurrentWeek();
-  const [longTerm, weekly] = await Promise.all([
+  const [longTerm, trophies, weekly] = await Promise.all([
     prisma.longTermGoal.findMany({
-      where: { status: { not: "ARCHIVED" } },
-      include: { weeklyGoals: { select: { status: true } } },
+      where: { status: "ACTIVE" },
+      include: goalInclude,
       orderBy: { createdAt: "asc" },
+    }),
+    prisma.longTermGoal.findMany({
+      where: { status: "COMPLETED" },
+      include: goalInclude,
+      orderBy: { completedAt: "desc" },
     }),
     prisma.weeklyGoal.findMany({
       where: { weekId: week.id },
@@ -46,9 +63,8 @@ export default async function GoalsPage() {
           </p>
         )}
         {longTerm.map((g) => {
-          const decided = g.weeklyGoals.filter((w) => w.status !== "ACTIVE");
-          const completed = decided.filter((w) => w.status === "COMPLETED").length;
-          const pct = decided.length === 0 ? 0 : Math.round((completed / decided.length) * 100);
+          const p = levelProgress(goalXpFrom(g.weeklyGoals));
+          const weeksDone = g.weeklyGoals.filter((w) => w.status === "COMPLETED").length;
           return (
             <Card key={g.id} className="rise-in">
               <div className="flex items-start justify-between gap-2">
@@ -56,24 +72,36 @@ export default async function GoalsPage() {
                   <p className="font-display text-base font-semibold">
                     {g.icon ? `${g.icon} ` : ""}
                     {g.title}
+                    <span className="ml-2 text-violet">Nv. {p.level}</span>
                   </p>
                   {g.description && (
                     <p className="mt-0.5 text-xs text-muted">{g.description}</p>
                   )}
                 </div>
-                <form action={archiveLongTermGoal.bind(null, g.id)}>
-                  <button
-                    className="min-h-11 px-2 text-xs text-muted hover:text-red"
-                    title="Archivar objetivo"
-                  >
-                    Archivar
-                  </button>
-                </form>
+                <div className="flex shrink-0 items-center">
+                  <form action={completeLongTermGoal.bind(null, g.id)}>
+                    <button
+                      className="min-h-11 px-2 text-xs font-medium text-green"
+                      title="Conseguido: retirar a la vitrina con su nivel final"
+                    >
+                      Conseguido
+                    </button>
+                  </form>
+                  <form action={archiveLongTermGoal.bind(null, g.id)}>
+                    <button
+                      className="min-h-11 px-2 text-xs text-muted hover:text-red"
+                      title="Archivar objetivo (abandono, sin trofeo)"
+                    >
+                      Archivar
+                    </button>
+                  </form>
+                </div>
               </div>
               <div className="mt-3">
-                <ProgressBar pct={pct} />
+                <ProgressBar pct={p.pct} />
                 <p className="mt-1 text-xs text-muted">
-                  {completed} de {decided.length} semanas cumplidas ({pct}%)
+                  {p.current}/{p.needed} XP · {weeksDone}{" "}
+                  {weeksDone === 1 ? "semana cumplida" : "semanas cumplidas"}
                 </p>
               </div>
             </Card>
@@ -178,6 +206,29 @@ export default async function GoalsPage() {
           </form>
         </AddDisclosure>
       </section>
+
+      {trophies.length > 0 && (
+        <section className="space-y-3">
+          <SectionTitle>🏆 Vitrina</SectionTitle>
+          {trophies.map((g) => (
+            <Card key={g.id} className="flex items-center justify-between opacity-90">
+              <p className="text-sm font-medium">
+                {g.icon ? `${g.icon} ` : ""}
+                {g.title}
+                <span className="ml-2 font-display font-semibold text-violet">
+                  Nv. {levelForXp(goalXpFrom(g.weeklyGoals))}
+                </span>
+              </p>
+              <p className="shrink-0 text-xs text-muted">
+                {g.completedAt?.toLocaleDateString("es-ES", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+            </Card>
+          ))}
+        </section>
+      )}
     </div>
   );
 }
