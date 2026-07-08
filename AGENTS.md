@@ -52,6 +52,12 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   **monedas** = divisa gastable en la Tienda. Todo movimiento queda en el
   ledger `PointsEntry` — nunca modificar saldos sin su asiento correspondiente,
   dentro de la misma transacción.
+- **Racha diaria** 🔥: días consecutivos con ≥1 tarea completada, derivada del
+  ledger en lectura (`streak.ts`, puro: un `TASK_UNCOMPLETED` cancela el
+  completado vivo más reciente de su tarea — sin contadores almacenados).
+  Multiplica las **monedas** por tarea (+10 %/día contando hoy, tope ×2,
+  redondeado); la XP no. El asiento `TASK_COMPLETED` guarda las monedas ya
+  multiplicadas y desmarcar devuelve lo del asiento, nunca recalcula.
 - **Recurrencia semanal**: plantillas `RecurringGoal`/`RecurringTask` (tarea
   suelta si `recurringGoalId` es null). `applyRecurrence(weekId)` las instancia
   como objetivos/tareas normales (idempotente vía `sourceRecurringId`) al crear

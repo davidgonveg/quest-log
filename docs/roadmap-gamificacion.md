@@ -29,15 +29,6 @@ Las tres carencias más importantes frente a un juego que engancha:
 
 ## Prioridad 1 — el bucle diario (máximo impacto, poco código)
 
-### 1.1 Racha diaria con multiplicador 🔥
-- Racha = días consecutivos con ≥1 tarea completada. Visible en el header del
-  dashboard junto al nivel.
-- **La racha multiplica las monedas ganadas**: +10% por día de racha, tope ×2.
-  Así romperla no es solo perder un número bonito: es perder ingresos futuros
-  (aversión a la pérdida sobre la economía real de premios).
-- Modelo: calculable del ledger (`PointsEntry` TASK_COMPLETED por día) — sin
-  columnas nuevas, coherente con el patrón `goalXpFrom`.
-
 ### 1.2 Botín aleatorio 🎁 (recompensa variable)
 - Al completar una tarea, ~15% de probabilidad de "¡Botín!": bonus aleatorio
   (5-30 🪙 o un multiplicador puntual). Animación distinta, inesperada.
@@ -108,3 +99,5 @@ Las tres carencias más importantes frente a un juego que engancha:
   (`docs/superpowers/specs/2026-07-08-goal-levels-design.md`).
 - 2026-07-08 — Objetivos y tareas recurrentes
   (`docs/superpowers/specs/2026-07-08-recurrencia-semanal-design.md`).
+- 2026-07-08 — Racha diaria con multiplicador de monedas
+  (`docs/superpowers/specs/2026-07-08-racha-diaria-design.md`).
