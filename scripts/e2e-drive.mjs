@@ -116,21 +116,35 @@ try {
   }
   log("✅", "Dos tareas EASY creadas y agrupadas en 'Cualquier día'");
 
-  // 5. Completar UNA tarea desde el dashboard → +10 XP, +5 monedas
+  // 5. Completar UNA tarea desde el dashboard → racha 1: +10 XP y 5×1.1 = 6 🪙.
+  // Antes, la pendiente ya anuncia el bonus (racha si se completa ahora = 1).
   await page.goto(BASE, { waitUntil: "networkidle" });
+  const bonusPreview = await page.getByText("🔥 +1").count();
+  log(
+    bonusPreview > 0 ? "✅" : "❌",
+    "La tarea pendiente muestra el desglose del bonus de racha (🔥 +1)",
+  );
   await page.getByRole("button", { name: /Completar Salir a correr/ }).click();
   await page.getByText("10 / 100 XP").waitFor({ timeout: 10000 });
-  const coins = await page.locator("header").getByText("5", { exact: true }).count();
+  const coins = await page.locator("header").getByText("6", { exact: true }).count();
+  const flame = await page.getByLabel("Racha de 1 día").count();
   log(
-    coins > 0 ? "✅" : "❌",
-    "Completar tarea → barra de XP marca 10/100 y las monedas suben a 5",
+    coins > 0 && flame > 0 ? "✅" : "❌",
+    "Completar tarea → 10/100 XP, monedas ×1.1 (6) y 🔥 1 en el header",
   );
   await page.screenshot({ path: `${SHOT_DIR}/02-dash-tarea-completada.png` });
 
-  // 🔍 6. Desmarcar la misma tarea → los puntos se devuelven
+  // 🔍 6. Desmarcar devuelve lo del asiento (las 6 multiplicadas) y rompe la racha.
+  // exact: sin él, "0 / 100 XP" casa por subcadena con el "10 / 100 XP" previo
+  // y las aserciones correrían contra el DOM de antes de la revalidación.
   await page.getByRole("button", { name: /Desmarcar Salir a correr/ }).click();
-  await page.getByText("0 / 100 XP").waitFor({ timeout: 10000 });
-  log("🔍", "Desmarcar la tarea devuelve los puntos (0/100 XP de nuevo)");
+  await page.getByText("0 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
+  const coinsBack = await page.locator("header").getByText("0", { exact: true }).count();
+  const flameBroken = await page.getByLabel("Racha rota").count();
+  log(
+    coinsBack > 0 && flameBroken > 0 ? "🔍" : "❌",
+    "Desmarcar devuelve las monedas multiplicadas (0 🪙) y el chip queda en 🔥 0 gris",
+  );
   await page.getByRole("button", { name: /Completar Salir a correr/ }).click();
   await page.getByText("10 / 100 XP").waitFor({ timeout: 10000 });
 
@@ -151,7 +165,7 @@ try {
   const disabled = await redeemBtn.isDisabled();
   log(
     disabled ? "🔍" : "❌",
-    `Con 5 monedas, el premio de 30 tiene 'Canjear' ${disabled ? "deshabilitado" : "ACTIVO (mal)"}`,
+    `Con 6 monedas, el premio de 30 tiene 'Canjear' ${disabled ? "deshabilitado" : "ACTIVO (mal)"}`,
   );
   await page.screenshot({ path: `${SHOT_DIR}/03-tienda-sin-saldo.png` });
 

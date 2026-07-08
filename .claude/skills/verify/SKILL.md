@@ -21,11 +21,12 @@ node scripts/e2e-drive.mjs   # requiere Edge instalado (playwright-core channel 
 SHOT_DIR=<dir> node scripts/e2e-drive.mjs   # dónde dejar las capturas
 ```
 
-Recorre: dashboard inicial → crear objetivo LP y semanal crítico → objetivo y tareas recurrentes (plantillas, toggle 🔁, pausa) → crear 2 tareas → completar/desmarcar (XP/monedas) → tienda sin saldo → cierre manual de semana → banner de penalización → "Asumido" → objetivo "✕ Fallido". Sale con código 1 y captura `99-error.png` si algo falla.
+Recorre: dashboard inicial → crear objetivo LP y semanal crítico → objetivo y tareas recurrentes (plantillas, toggle 🔁, pausa) → crear 2 tareas → completar/desmarcar (XP/monedas ×racha 🔥, devolución por asiento) → tienda sin saldo → cierre manual de semana → banner de penalización → "Asumido" → objetivo "✕ Fallido". Sale con código 1 y captura `99-error.png` si algo falla.
 
 ## Trampas conocidas
 
 - El script debe ejecutarse desde la raíz del repo (resuelve `playwright-core` de node_modules).
 - Los server actions tardan: tras acciones que revalidan, esperar texto que solo exista tras el commit (no textos que ya estén en formularios) o recargar en bucle.
 - Los `<details>` de los formularios se re-pliegan con cada revalidación RSC: abrirlos por JS (`el.open = true`), no con click en el summary.
+- `getByText` casa por **subcadena**: `"0 / 100 XP"` también casa con `"10 / 100 XP"`, así que una espera numérica puede resolverse contra el DOM viejo. Usar `{ exact: true }` en esperas de texto numérico.
 - Puerto 3000: si compose falla con "port not available", suele haber un `node` huérfano del dev server (matarlo con `Get-NetTCPConnection -LocalPort 3000`).
