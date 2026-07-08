@@ -24,6 +24,7 @@ model LongTermGoal {
   icon        String?
   targetDate  DateTime?
   status      String       @default("ACTIVE")
+  completedAt DateTime? // fecha de "Conseguido" (vitrina de trofeos)
   createdAt   DateTime     @default(now())
   weeklyGoals WeeklyGoal[]
 }

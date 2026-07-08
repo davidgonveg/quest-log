@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { GOAL_COMPLETION_BONUS_XP } from "@/lib/gamification";
 import { ensureCurrentWeek, getUser } from "@/lib/week";
 
 function revalidateGoalPages() {
@@ -28,6 +29,16 @@ export async function archiveLongTermGoal(id: string): Promise<void> {
   revalidateGoalPages();
 }
 
+// "Conseguido": retira el objetivo a la vitrina con su nivel final.
+// Sin recompensa de puntos: el trofeo es la recompensa (y evita farmeo).
+export async function completeLongTermGoal(id: string): Promise<void> {
+  await prisma.longTermGoal.update({
+    where: { id },
+    data: { status: "COMPLETED", completedAt: new Date() },
+  });
+  revalidateGoalPages();
+}
+
 export async function createWeeklyGoal(formData: FormData): Promise<void> {
   const title = String(formData.get("title") ?? "").trim();
   if (!title) return;
@@ -50,8 +61,9 @@ export async function deleteWeeklyGoal(id: string): Promise<void> {
 }
 
 // Cierre manual de un objetivo sin tareas (o que se da por hecho).
-// Otorga una recompensa fija por objetivo cumplido.
-const GOAL_BONUS = { xp: 40, coins: 20 };
+// Otorga una recompensa fija por objetivo cumplido. La XP debe coincidir con
+// GOAL_COMPLETION_BONUS_XP: goalXpFrom() la asume al calcular niveles de objetivo.
+const GOAL_BONUS = { xp: GOAL_COMPLETION_BONUS_XP, coins: 20 };
 
 export async function completeWeeklyGoal(id: string): Promise<void> {
   const goal = await prisma.weeklyGoal.findUniqueOrThrow({ where: { id } });
