@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    container_name: quest-log
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "file:/data/quest.db"
+    volumes:
+      - quest-data:/data
+    restart: unless-stopped
+
+volumes:
+  quest-data:

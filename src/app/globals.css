@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* Quest Log — HUD oscuro nativo. Tinta violeta profunda, oro para XP/monedas,
+   violeta para nivel, carmesí solo para lo crítico. */
+:root {
+  --bg: #100e1c;
+  --surface: #1a1830;
+  --surface-2: #232043;
+  --border: #2e2a52;
+  --text: #efedfb;
+  --muted: #9490b8;
+  --gold: #f5b93f;
+  --gold-soft: #f5b93f26;
+  --violet: #8b7cf6;
+  --violet-soft: #8b7cf626;
+  --green: #3ecf8e;
+  --green-soft: #3ecf8e26;
+  --red: #e5484d;
+  --red-soft: #e5484d26;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f2f1f8;
+    --surface: #ffffff;
+    --surface-2: #eceafa;
+    --border: #dcd8f0;
+    --text: #1b1830;
+    --muted: #625d85;
+    --gold: #c78a0a;
+    --gold-soft: #c78a0a1f;
+    --violet: #6a58e8;
+    --violet-soft: #6a58e81f;
+    --green: #14915c;
+    --green-soft: #14915c1f;
+    --red: #d0353a;
+    --red-soft: #d0353a1f;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-edge: var(--border);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-green: var(--green);
+  --color-green-soft: var(--green-soft);
+  --color-red: var(--red);
+  --color-red-soft: var(--red-soft);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Firma visual: esquinas achaflanadas estilo HUD en elementos clave. */
+.hud-chamfer {
+  clip-path: polygon(
+    8px 0, 100% 0, 100% calc(100% - 8px),
+    calc(100% - 8px) 100%, 0 100%, 0 8px
+  );
+}
+.hud-chamfer-sm {
+  clip-path: polygon(
+    5px 0, 100% 0, 100% calc(100% - 5px),
+    calc(100% - 5px) 100%, 0 100%, 0 5px
+  );
+}
+
+/* Brillo que recorre la barra de XP. */
+@keyframes xp-shine {
+  0%, 60% { transform: translateX(-150%); }
+  100% { transform: translateX(400%); }
+}
+.xp-shine {
+  animation: xp-shine 3.2s ease-in-out infinite;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise-in {
+  animation: rise-in 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-shine, .rise-in {
+    animation: none;
+  }
+}

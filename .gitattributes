@@ -1,0 +1,2 @@
+# Los scripts de shell van dentro de la imagen Docker: siempre LF.
+*.sh text eol=lf

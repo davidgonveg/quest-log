@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Versión maskable: fondo a sangre completa, contenido en la zona segura -->
+  <rect width="512" height="512" fill="#100e1c"/>
+  <polygon points="144,160 368,160 384,176 384,224 368,240 144,240 128,224 128,176"
+           fill="#232043"/>
+  <polygon points="144,160 288,160 304,176 304,224 288,240 144,240 128,224 128,176"
+           fill="#f5b93f"/>
+  <text x="256" y="400" text-anchor="middle" font-family="monospace"
+        font-size="150" font-weight="bold" fill="#efedfb">QL</text>
+</svg>

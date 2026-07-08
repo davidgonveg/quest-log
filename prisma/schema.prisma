@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Una sola fila en v1; el esquema no impide multiusuario futuro.
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  xp        Int      @default(0)
+  coins     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// status: ACTIVE | COMPLETED | ARCHIVED
+model LongTermGoal {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  icon        String?
+  targetDate  DateTime?
+  status      String       @default("ACTIVE")
+  createdAt   DateTime     @default(now())
+  weeklyGoals WeeklyGoal[]
+}
+
+model Week {
+  id          String       @id @default(cuid())
+  startDate   DateTime // lunes 00:00 (hora local del servidor)
+  endDate     DateTime // domingo 23:59:59.999
+  closedAt    DateTime?
+  penaltyMsg  String? // mensaje duro elegido al cierre; null si semana limpia
+  msgSeen     Boolean      @default(false)
+  weeklyGoals WeeklyGoal[]
+  tasks       Task[]
+}
+
+// status: ACTIVE | COMPLETED | FAILED (FAILED se asigna al cierre de semana)
+model WeeklyGoal {
+  id             String        @id @default(cuid())
+  weekId         String
+  week           Week          @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  longTermGoalId String?
+  longTermGoal   LongTermGoal? @relation(fields: [longTermGoalId], references: [id], onDelete: SetNull)
+  title          String
+  isCritical     Boolean       @default(false)
+  status         String        @default("ACTIVE")
+  tasks          Task[]
+}
+
+// difficulty: EASY | MEDIUM | HARD
+model Task {
+  id           String      @id @default(cuid())
+  weekId       String
+  week         Week        @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  weeklyGoalId String?
+  weeklyGoal   WeeklyGoal? @relation(fields: [weeklyGoalId], references: [id], onDelete: SetNull)
+  title        String
+  dueDay       Int? // 0-6 (lunes-domingo), null = cualquier día
+  difficulty   String      @default("MEDIUM")
+  xpReward     Int
+  coinReward   Int
+  completedAt  DateTime?
+}
+
+model Reward {
+  id          String       @id @default(cuid())
+  title       String
+  icon        String?
+  cost        Int
+  active      Boolean      @default(true)
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id         String   @id @default(cuid())
+  rewardId   String
+  reward     Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  cost       Int // coste en el momento del canje
+  redeemedAt DateTime @default(now())
+}
+
+// Ledger auditable de todo movimiento de XP/monedas.
+// reason: TASK_COMPLETED | TASK_UNCOMPLETED | GOAL_COMPLETED | PENALTY | REDEMPTION
+model PointsEntry {
+  id        String   @id @default(cuid())
+  xpDelta   Int      @default(0)
+  coinDelta Int      @default(0)
+  reason    String
+  refId     String?
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
+}

@@ -1,0 +1,24 @@
+{
+  "name": "Quest Log",
+  "short_name": "Quest Log",
+  "description": "Organizador semanal gamificado",
+  "lang": "es",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#100e1c",
+  "theme_color": "#100e1c",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

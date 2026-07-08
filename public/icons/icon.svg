@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Placa HUD achaflanada con barra de XP: la firma visual de la app -->
+  <polygon points="64,32 448,32 480,64 480,448 448,480 64,480 32,448 32,64"
+           fill="#100e1c" stroke="#8b7cf6" stroke-width="12"/>
+  <polygon points="112,96 400,96 416,112 416,160 400,176 112,176 96,160 96,112"
+           fill="#232043"/>
+  <polygon points="112,96 296,96 312,112 312,160 296,176 112,176 96,160 96,112"
+           fill="#f5b93f"/>
+  <text x="256" y="392" text-anchor="middle" font-family="monospace"
+        font-size="200" font-weight="bold" fill="#efedfb">QL</text>
+</svg>
