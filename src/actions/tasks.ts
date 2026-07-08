@@ -19,17 +19,39 @@ export async function createTask(formData: FormData): Promise<void> {
   const weeklyGoalId = String(formData.get("weeklyGoalId") ?? "");
 
   const week = await ensureCurrentWeek();
-  await prisma.task.create({
-    data: {
-      weekId: week.id,
-      title,
-      difficulty,
-      dueDay: dueDay !== null && dueDay >= 0 && dueDay <= 6 ? dueDay : null,
-      weeklyGoalId: weeklyGoalId || null,
-      xpReward: rewards.xp,
-      coinReward: rewards.coins,
-    },
-  });
+  const data = {
+    weekId: week.id,
+    title,
+    difficulty,
+    dueDay: dueDay !== null && dueDay >= 0 && dueDay <= 6 ? dueDay : null,
+    weeklyGoalId: weeklyGoalId || null,
+    xpReward: rewards.xp,
+    coinReward: rewards.coins,
+  };
+
+  // undefined = sin recurrencia; null = plantilla suelta; string = colgada
+  // del objetivo recurrente. Con objetivo no recurrente el flag se ignora
+  // (la UI ya oculta el toggle en ese caso).
+  let recurringGoalId: string | null | undefined;
+  if (formData.get("recurring") === "on") {
+    if (!weeklyGoalId) {
+      recurringGoalId = null;
+    } else {
+      const goal = await prisma.weeklyGoal.findUnique({ where: { id: weeklyGoalId } });
+      if (goal?.sourceRecurringId) recurringGoalId = goal.sourceRecurringId;
+    }
+  }
+
+  if (recurringGoalId !== undefined) {
+    await prisma.$transaction(async (tx) => {
+      const tpl = await tx.recurringTask.create({
+        data: { recurringGoalId, title, dueDay: data.dueDay, difficulty },
+      });
+      await tx.task.create({ data: { ...data, sourceRecurringId: tpl.id } });
+    });
+  } else {
+    await prisma.task.create({ data });
+  }
   revalidatePath("/");
   revalidatePath("/tasks");
   revalidatePath("/goals");

@@ -43,15 +43,24 @@ export async function createWeeklyGoal(formData: FormData): Promise<void> {
   const title = String(formData.get("title") ?? "").trim();
   if (!title) return;
   const week = await ensureCurrentWeek();
-  const longTermGoalId = String(formData.get("longTermGoalId") ?? "");
-  await prisma.weeklyGoal.create({
-    data: {
-      weekId: week.id,
-      title,
-      isCritical: formData.get("isCritical") === "on",
-      longTermGoalId: longTermGoalId || null,
-    },
-  });
+  const longTermGoalId = String(formData.get("longTermGoalId") ?? "") || null;
+  const isCritical = formData.get("isCritical") === "on";
+
+  if (formData.get("recurring") === "on") {
+    // Plantilla + instancia juntas: si algo falla no queda plantilla huérfana.
+    await prisma.$transaction(async (tx) => {
+      const tpl = await tx.recurringGoal.create({
+        data: { title, isCritical, longTermGoalId },
+      });
+      await tx.weeklyGoal.create({
+        data: { weekId: week.id, title, isCritical, longTermGoalId, sourceRecurringId: tpl.id },
+      });
+    });
+  } else {
+    await prisma.weeklyGoal.create({
+      data: { weekId: week.id, title, isCritical, longTermGoalId },
+    });
+  }
   revalidateGoalPages();
 }
 
