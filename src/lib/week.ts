@@ -2,6 +2,7 @@ import { prisma } from "./db";
 import { DEFAULT_PENALTY, type PenaltySettings } from "./gamification";
 import { closeWeekPlan } from "./week-logic";
 import { getWeekBounds } from "./week-logic";
+import { planRecurrence } from "./recurrence";
 
 export async function getPenaltySettings(): Promise<PenaltySettings> {
   const rows = await prisma.setting.findMany({
@@ -91,7 +92,73 @@ export async function ensureCurrentWeek() {
   });
   if (existing) return existing;
 
-  return prisma.week.create({ data: { startDate: start, endDate: end } });
+  const week = await prisma.week.create({ data: { startDate: start, endDate: end } });
+  await applyRecurrence(week.id);
+  return week;
+}
+
+// Instancia en la semana las plantillas recurrentes activas que aún no estén.
+// Idempotente vía sourceRecurringId; se llama al crear la semana y al
+// crear/reactivar una plantilla (alta a mitad de semana = instancia inmediata).
+export async function applyRecurrence(weekId: string): Promise<void> {
+  const [goals, standaloneTasks, existingGoals, existingTasks] = await Promise.all([
+    prisma.recurringGoal.findMany({ where: { active: true }, include: { tasks: true } }),
+    prisma.recurringTask.findMany({ where: { recurringGoalId: null, active: true } }),
+    prisma.weeklyGoal.findMany({
+      where: { weekId, sourceRecurringId: { not: null } },
+      select: { sourceRecurringId: true },
+    }),
+    prisma.task.findMany({
+      where: { weekId, sourceRecurringId: { not: null } },
+      select: { sourceRecurringId: true },
+    }),
+  ]);
+
+  const plan = planRecurrence({
+    goals,
+    standaloneTasks,
+    existingGoalSourceIds: existingGoals.map((g) => g.sourceRecurringId as string),
+    existingTaskSourceIds: existingTasks.map((t) => t.sourceRecurringId as string),
+  });
+  if (plan.goals.length === 0 && plan.standaloneTasks.length === 0) return;
+
+  await prisma.$transaction([
+    ...plan.goals.map((g) =>
+      prisma.weeklyGoal.create({
+        data: {
+          weekId,
+          title: g.title,
+          isCritical: g.isCritical,
+          longTermGoalId: g.longTermGoalId,
+          sourceRecurringId: g.sourceRecurringId,
+          tasks: {
+            create: g.tasks.map((t) => ({
+              title: t.title,
+              dueDay: t.dueDay,
+              difficulty: t.difficulty,
+              xpReward: t.xpReward,
+              coinReward: t.coinReward,
+              sourceRecurringId: t.sourceRecurringId,
+              week: { connect: { id: weekId } },
+            })),
+          },
+        },
+      }),
+    ),
+    ...plan.standaloneTasks.map((t) =>
+      prisma.task.create({
+        data: {
+          weekId,
+          title: t.title,
+          dueDay: t.dueDay,
+          difficulty: t.difficulty,
+          xpReward: t.xpReward,
+          coinReward: t.coinReward,
+          sourceRecurringId: t.sourceRecurringId,
+        },
+      }),
+    ),
+  ]);
 }
 
 // Última semana cerrada con penalización cuyo mensaje aún no se ha descartado.
