@@ -6,6 +6,7 @@ import { createTask } from "@/actions/tasks";
 import { WeekTasks } from "@/components/tasks/WeekTasks";
 import type { TaskItemData } from "@/components/tasks/TaskRow";
 import { AddDisclosure, Label, PrimaryButton, Select, TextInput } from "@/components/ui/Form";
+import { GoalPickerWithRecurring } from "@/components/tasks/GoalPickerWithRecurring";
 
 export const dynamic = "force-dynamic";
 
@@ -64,17 +65,13 @@ export default async function TasksPage() {
               </Select>
             </Label>
           </div>
-          <Label>
-            Objetivo semanal (opcional)
-            <Select name="weeklyGoalId" defaultValue="">
-              <option value="">Sin objetivo</option>
-              {weeklyGoals.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.title}
-                </option>
-              ))}
-            </Select>
-          </Label>
+          <GoalPickerWithRecurring
+            goals={weeklyGoals.map((g) => ({
+              id: g.id,
+              title: g.title,
+              isRecurring: g.sourceRecurringId !== null,
+            }))}
+          />
           <PrimaryButton type="submit">Añadir tarea</PrimaryButton>
         </form>
       </AddDisclosure>
