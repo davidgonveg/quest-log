@@ -38,6 +38,25 @@ export function levelProgress(xp: number) {
   return { level, current, needed, pct: Math.round((current / needed) * 100) };
 }
 
+export const GOAL_COMPLETION_BONUS_XP = 40;
+
+// XP de un objetivo a largo plazo: se calcula en lectura, nunca se almacena.
+// Retroactiva y a prueba de desmarcados: desmarcar una tarea baja el nivel sola.
+export function goalXpFrom(
+  weeklyGoals: {
+    status: string;
+    tasks: { completedAt: Date | null; xpReward: number }[];
+  }[],
+): number {
+  return weeklyGoals.reduce(
+    (sum, g) =>
+      sum +
+      (g.status === "COMPLETED" ? GOAL_COMPLETION_BONUS_XP : 0) +
+      g.tasks.reduce((s, t) => s + (t.completedAt ? t.xpReward : 0), 0),
+    0,
+  );
+}
+
 export interface PenaltySettings {
   penaltyXp: number;
   penaltyCoins: number;

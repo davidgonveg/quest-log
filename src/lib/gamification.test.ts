@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computePenalty,
+  goalXpFrom,
   levelForXp,
   levelProgress,
   rewardsForDifficulty,
@@ -88,5 +89,32 @@ describe("computePenalty", () => {
     );
     expect(p.xpDelta).toBe(0);
     expect(p.coinDelta).toBe(0);
+  });
+});
+
+describe("goalXpFrom", () => {
+  it("objetivo sin nada = 0 XP (nivel 1)", () => {
+    expect(goalXpFrom([])).toBe(0);
+  });
+
+  it("suma la xpReward de tareas completadas, ignora las pendientes", () => {
+    const weeklyGoals = [
+      {
+        status: "ACTIVE",
+        tasks: [
+          { completedAt: new Date(), xpReward: 25 },
+          { completedAt: null, xpReward: 50 },
+        ],
+      },
+    ];
+    expect(goalXpFrom(weeklyGoals)).toBe(25);
+  });
+
+  it("añade 40 XP por cada objetivo semanal COMPLETED", () => {
+    const weeklyGoals = [
+      { status: "COMPLETED", tasks: [{ completedAt: new Date(), xpReward: 10 }] },
+      { status: "FAILED", tasks: [] },
+    ];
+    expect(goalXpFrom(weeklyGoals)).toBe(50);
   });
 });
