@@ -55,18 +55,6 @@ Las tres carencias más importantes frente a un juego que engancha:
 - Completar tarea: micro-explosión de partículas en el check (CSS, sin libs).
 - Respetar `prefers-reduced-motion` como ya hace el resto.
 
-### 1.5 Objetivos y tareas recurrentes 🔁 (pedido por David, 2026-07-08)
-- Definir una vez "Entrenar 4 días" (crítico, vinculado a un objetivo LP) con
-  sus 4 tareas, y que cada semana nueva se cree sola con todo dentro.
-- También tareas sueltas recurrentes ("preparar comidas" cada domingo).
-- Punto de enganche natural: `ensureCurrentWeek()` al crear la semana.
-- Decisión de diseño pendiente (brainstorm): tabla de plantillas
-  (`RecurringGoal`/`RecurringTask`) vs. flag `repeatsWeekly` + copia de la
-  semana anterior. Cuidado con: editar/eliminar la recurrencia a futuro sin
-  tocar semanas pasadas.
-- No es gamificación pero es **retención pura**: elimina la fricción del lunes,
-  que es donde mueren estas apps.
-
 ## Prioridad 2 — el ritual semanal
 
 ### 2.1 El jefe de la semana 👹
@@ -118,3 +106,5 @@ Las tres carencias más importantes frente a un juego que engancha:
 
 - 2026-07-08 — Niveles por objetivo + vitrina de trofeos
   (`docs/superpowers/specs/2026-07-08-goal-levels-design.md`).
+- 2026-07-08 — Objetivos y tareas recurrentes
+  (`docs/superpowers/specs/2026-07-08-recurrencia-semanal-design.md`).

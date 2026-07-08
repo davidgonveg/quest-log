@@ -52,6 +52,12 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   **monedas** = divisa gastable en la Tienda. Todo movimiento queda en el
   ledger `PointsEntry` — nunca modificar saldos sin su asiento correspondiente,
   dentro de la misma transacción.
+- **Recurrencia semanal**: plantillas `RecurringGoal`/`RecurringTask` (tarea
+  suelta si `recurringGoalId` es null). `applyRecurrence(weekId)` las instancia
+  como objetivos/tareas normales (idempotente vía `sourceRecurringId`) al crear
+  la semana en `ensureCurrentWeek()` y al crear/reactivar una plantilla.
+  Editar/pausar/borrar una plantilla nunca toca semanas ya creadas. Lógica pura
+  en `recurrence.ts`.
 - **Primer arranque**: `getUser()` auto-inicializa usuario y premios si la BD
   está vacía (por eso Docker no necesita seed).
 

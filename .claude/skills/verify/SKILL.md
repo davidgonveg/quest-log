@@ -21,7 +21,7 @@ node scripts/e2e-drive.mjs   # requiere Edge instalado (playwright-core channel 
 SHOT_DIR=<dir> node scripts/e2e-drive.mjs   # dónde dejar las capturas
 ```
 
-Recorre: dashboard inicial → crear objetivo LP y semanal crítico → crear 2 tareas → completar/desmarcar (XP/monedas) → tienda sin saldo → cierre manual de semana → banner de penalización → "Asumido" → objetivo "✕ Fallido". Sale con código 1 y captura `99-error.png` si algo falla.
+Recorre: dashboard inicial → crear objetivo LP y semanal crítico → objetivo y tareas recurrentes (plantillas, toggle 🔁, pausa) → crear 2 tareas → completar/desmarcar (XP/monedas) → tienda sin saldo → cierre manual de semana → banner de penalización → "Asumido" → objetivo "✕ Fallido". Sale con código 1 y captura `99-error.png` si algo falla.
 
 ## Trampas conocidas
 
