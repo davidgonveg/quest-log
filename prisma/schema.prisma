@@ -18,15 +18,16 @@ model User {
 
 // status: ACTIVE | COMPLETED | ARCHIVED
 model LongTermGoal {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  icon        String?
-  targetDate  DateTime?
-  status      String       @default("ACTIVE")
-  completedAt DateTime? // fecha de "Conseguido" (vitrina de trofeos)
-  createdAt   DateTime     @default(now())
-  weeklyGoals WeeklyGoal[]
+  id             String          @id @default(cuid())
+  title          String
+  description    String?
+  icon           String?
+  targetDate     DateTime?
+  status         String          @default("ACTIVE")
+  completedAt    DateTime? // fecha de "Conseguido" (vitrina de trofeos)
+  createdAt      DateTime        @default(now())
+  weeklyGoals    WeeklyGoal[]
+  recurringGoals RecurringGoal[]
 }
 
 model Week {
@@ -42,30 +43,34 @@ model Week {
 
 // status: ACTIVE | COMPLETED | FAILED (FAILED se asigna al cierre de semana)
 model WeeklyGoal {
-  id             String        @id @default(cuid())
-  weekId         String
-  week           Week          @relation(fields: [weekId], references: [id], onDelete: Cascade)
-  longTermGoalId String?
-  longTermGoal   LongTermGoal? @relation(fields: [longTermGoalId], references: [id], onDelete: SetNull)
-  title          String
-  isCritical     Boolean       @default(false)
-  status         String        @default("ACTIVE")
-  tasks          Task[]
+  id                String         @id @default(cuid())
+  weekId            String
+  week              Week           @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  longTermGoalId    String?
+  longTermGoal      LongTermGoal?  @relation(fields: [longTermGoalId], references: [id], onDelete: SetNull)
+  title             String
+  isCritical        Boolean        @default(false)
+  status            String         @default("ACTIVE")
+  sourceRecurringId String? // plantilla origen: idempotencia al instanciar
+  sourceRecurring   RecurringGoal? @relation(fields: [sourceRecurringId], references: [id], onDelete: SetNull)
+  tasks             Task[]
 }
 
 // difficulty: EASY | MEDIUM | HARD
 model Task {
-  id           String      @id @default(cuid())
-  weekId       String
-  week         Week        @relation(fields: [weekId], references: [id], onDelete: Cascade)
-  weeklyGoalId String?
-  weeklyGoal   WeeklyGoal? @relation(fields: [weeklyGoalId], references: [id], onDelete: SetNull)
-  title        String
-  dueDay       Int? // 0-6 (lunes-domingo), null = cualquier día
-  difficulty   String      @default("MEDIUM")
-  xpReward     Int
-  coinReward   Int
-  completedAt  DateTime?
+  id                String         @id @default(cuid())
+  weekId            String
+  week              Week           @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  weeklyGoalId      String?
+  weeklyGoal        WeeklyGoal?    @relation(fields: [weeklyGoalId], references: [id], onDelete: SetNull)
+  title             String
+  dueDay            Int? // 0-6 (lunes-domingo), null = cualquier día
+  difficulty        String         @default("MEDIUM")
+  sourceRecurringId String? // plantilla origen: idempotencia al instanciar
+  sourceRecurring   RecurringTask? @relation(fields: [sourceRecurringId], references: [id], onDelete: SetNull)
+  xpReward          Int
+  coinReward        Int
+  completedAt       DateTime?
 }
 
 model Reward {
@@ -99,4 +104,33 @@ model PointsEntry {
 model Setting {
   key   String @id
   value String
+}
+
+// Plantilla de objetivo semanal recurrente. Nunca se muestra como trabajo
+// pendiente: cada semana nueva se instancia como WeeklyGoal normal.
+// active=false = en pausa (no se instancia, las instancias pasadas quedan).
+model RecurringGoal {
+  id             String          @id @default(cuid())
+  title          String
+  isCritical     Boolean         @default(false)
+  longTermGoalId String?
+  longTermGoal   LongTermGoal?   @relation(fields: [longTermGoalId], references: [id], onDelete: SetNull)
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  tasks          RecurringTask[]
+  instances      WeeklyGoal[]
+}
+
+// Plantilla de tarea. recurringGoalId null = tarea suelta recurrente.
+// active solo se gestiona en sueltas; en tareas de objetivo se borra en su lugar.
+model RecurringTask {
+  id              String         @id @default(cuid())
+  recurringGoalId String?
+  recurringGoal   RecurringGoal? @relation(fields: [recurringGoalId], references: [id], onDelete: Cascade)
+  title           String
+  dueDay          Int? // 0-6 (lunes-domingo), null = cualquier día
+  difficulty      String         @default("MEDIUM")
+  active          Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  instances       Task[]
 }
