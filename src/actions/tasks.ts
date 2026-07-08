@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { rewardsForDifficulty, type Difficulty } from "@/lib/gamification";
+import { coinsWithStreak, streakIfCompleted } from "@/lib/streak";
 import { ensureCurrentWeek, getUser } from "@/lib/week";
 
 const DIFFICULTIES: Difficulty[] = ["EASY", "MEDIUM", "HARD"];
@@ -64,15 +65,22 @@ export async function deleteTask(taskId: string): Promise<void> {
   revalidatePath("/goals");
 }
 
-// Marca o desmarca una tarea. Al completar suma XP/monedas; al desmarcar las
-// devuelve (las monedas sin bajar de 0, por si ya se gastaron en la tienda).
+// Marca o desmarca una tarea. Al completar, la racha (incluyendo el día de
+// hoy) multiplica las monedas y el asiento registra las monedas finales; al
+// desmarcar se devuelve lo que dio ese asiento — nunca se recalcula el
+// multiplicador, que pudo cambiar entre medias. Recortado al saldo, como antes.
 export async function toggleTask(taskId: string): Promise<void> {
   const task = await prisma.task.findUniqueOrThrow({ where: { id: taskId } });
   const user = await getUser();
 
   if (task.completedAt) {
-    const coinDelta = -Math.min(user.coins, task.coinReward);
-    const xpDelta = -Math.min(user.xp, task.xpReward);
+    const entry = await prisma.pointsEntry.findFirst({
+      where: { reason: "TASK_COMPLETED", refId: taskId },
+      orderBy: { createdAt: "desc" },
+    });
+    // Sin asiento (completada antes de existir el ledger): recompensas base.
+    const xpDelta = -Math.min(user.xp, entry?.xpDelta ?? task.xpReward);
+    const coinDelta = -Math.min(user.coins, entry?.coinDelta ?? task.coinReward);
     await prisma.$transaction([
       prisma.task.update({ where: { id: taskId }, data: { completedAt: null } }),
       prisma.user.update({
@@ -84,16 +92,21 @@ export async function toggleTask(taskId: string): Promise<void> {
       }),
     ]);
   } else {
+    const entries = await prisma.pointsEntry.findMany({
+      where: { reason: { in: ["TASK_COMPLETED", "TASK_UNCOMPLETED"] } },
+      select: { reason: true, refId: true, createdAt: true },
+    });
+    const coins = coinsWithStreak(task.coinReward, streakIfCompleted(entries, new Date()));
     await prisma.$transaction([
       prisma.task.update({ where: { id: taskId }, data: { completedAt: new Date() } }),
       prisma.user.update({
         where: { id: user.id },
-        data: { xp: { increment: task.xpReward }, coins: { increment: task.coinReward } },
+        data: { xp: { increment: task.xpReward }, coins: { increment: coins } },
       }),
       prisma.pointsEntry.create({
         data: {
           xpDelta: task.xpReward,
-          coinDelta: task.coinReward,
+          coinDelta: coins,
           reason: "TASK_COMPLETED",
           refId: taskId,
         },

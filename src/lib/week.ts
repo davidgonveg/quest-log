@@ -3,6 +3,7 @@ import { DEFAULT_PENALTY, type PenaltySettings } from "./gamification";
 import { closeWeekPlan } from "./week-logic";
 import { getWeekBounds } from "./week-logic";
 import { planRecurrence } from "./recurrence";
+import { streakFrom, streakIfCompleted } from "./streak";
 
 export async function getPenaltySettings(): Promise<PenaltySettings> {
   const rows = await prisma.setting.findMany({
@@ -167,4 +168,17 @@ export async function getPendingPenalty() {
     where: { closedAt: { not: null }, penaltyMsg: { not: null }, msgSeen: false },
     orderBy: { endDate: "desc" },
   });
+}
+
+// Racha actual derivada del ledger + la racha que quedaría al completar una
+// tarea ahora (previsualización del bonus en la UI). Se leen todos los
+// asientos TASK_*: usuario único, volumen asumible durante años.
+export async function getStreakInfo() {
+  const entries = await prisma.pointsEntry.findMany({
+    where: { reason: { in: ["TASK_COMPLETED", "TASK_UNCOMPLETED"] } },
+    select: { reason: true, refId: true, createdAt: true },
+  });
+  const now = new Date();
+  const { current, lost } = streakFrom(entries, now);
+  return { current, lost, ifCompletedNow: streakIfCompleted(entries, now) };
 }
