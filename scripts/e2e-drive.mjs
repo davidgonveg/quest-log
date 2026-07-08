@@ -49,6 +49,58 @@ try {
   await page.getByText("Sin tareas").first().waitFor({ timeout: 10000 });
   log("✅", "Objetivo semanal crítico creado (tarjeta visible)");
 
+  // 3b. Objetivo semanal RECURRENTE (no crítico, para no tocar la penalización
+  // del cierre en el paso 8): instancia inmediata + plantilla en "Recurrentes"
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const rForm = page.locator("form", { has: page.getByRole("button", { name: "Crear objetivo semanal" }) });
+  await rForm.getByPlaceholder("Ej. Entrenar 3 días").fill("Leer a diario");
+  await rForm.locator("input[name=recurring]").check();
+  await rForm.getByRole("button", { name: "Crear objetivo semanal" }).click();
+  await page.getByText("🔁 Recurrentes").waitFor({ timeout: 10000 });
+  const instanceCount = await page.getByText("Leer a diario").count();
+  log(
+    instanceCount >= 2 ? "✅" : "❌",
+    "Objetivo 🔁 creado: instancia en 'Esta semana' y plantilla en 'Recurrentes'",
+  );
+  await page.screenshot({ path: `${SHOT_DIR}/06-recurrentes.png` });
+
+  // 3c. Tarea recurrente colgada del objetivo recurrente; de paso, el toggle
+  // 🔁 debe ocultarse al elegir un objetivo NO recurrente
+  await page.goto(`${BASE}/tasks`, { waitUntil: "networkidle" });
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const rtForm = page.locator("form", { has: page.getByRole("button", { name: "Añadir tarea" }) });
+  await rtForm.locator("select[name=weeklyGoalId]").selectOption({ label: "Entrenar 2 veces" });
+  const hiddenToggle = (await rtForm.locator("input[name=recurring]").count()) === 0;
+  log(hiddenToggle ? "🔍" : "❌", "El toggle 🔁 se oculta con un objetivo no recurrente");
+  await rtForm.getByPlaceholder("Ej. Entrenar 45 min").fill("Leer 20 páginas");
+  await rtForm.locator("select[name=weeklyGoalId]").selectOption({ label: "Leer a diario" });
+  await rtForm.locator("input[name=recurring]").check();
+  await rtForm.getByRole("button", { name: "Añadir tarea" }).click();
+  await page.getByText("Leer 20 páginas").first().waitFor({ timeout: 10000 });
+  log("✅", "Tarea 🔁 creada colgada del objetivo recurrente");
+
+  // 3d. Tarea suelta recurrente (domingo)
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  await rtForm.getByPlaceholder("Ej. Entrenar 45 min").fill("Preparar comidas");
+  await rtForm.locator("select[name=dueDay]").selectOption({ label: "Domingo" });
+  await rtForm.locator("input[name=recurring]").check();
+  await rtForm.getByRole("button", { name: "Añadir tarea" }).click();
+  await page.getByText("Preparar comidas").first().waitFor({ timeout: 10000 });
+  log("✅", "Tarea suelta recurrente creada (Preparar comidas, domingo)");
+
+  // 3e. La plantilla de la tarea 🔁 cuelga del objetivo en "Recurrentes";
+  // pausar la suelta la atenúa con badge "En pausa"
+  await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+  const tplTask = await page
+    .locator("section", { hasText: "🔁 Recurrentes" })
+    .getByText("Leer 20 páginas")
+    .count();
+  log(tplTask > 0 ? "✅" : "❌", "La plantilla de tarea aparece bajo su objetivo en 'Recurrentes'");
+  await page.getByRole("button", { name: "Pausar Preparar comidas" }).click();
+  await page.getByText("En pausa").waitFor({ timeout: 10000 });
+  log("✅", "Pausar la tarea suelta muestra el badge 'En pausa'");
+  await page.screenshot({ path: `${SHOT_DIR}/07-recurrente-pausada.png` });
+
   // 4. Crear dos tareas fáciles ligadas al objetivo (solo completaremos una)
   for (const title of ["Salir a correr", "Estirar 10 min"]) {
     await page.goto(`${BASE}/tasks`, { waitUntil: "networkidle" });
