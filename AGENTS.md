@@ -45,6 +45,9 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   (configurable, recortado para no dejar saldos negativos) y genera un mensaje
   duro de `messages.ts` que el dashboard muestra hasta pulsarse "Asumido".
   **Los mensajes son deliberadamente severos — no suavizarlos.**
+- **Niveles por objetivo LP**: su XP se calcula en lectura con `goalXpFrom()`
+  (tareas completadas + bonus por weeklyGoal COMPLETED), nunca se almacena.
+  "Conseguido" (`completedAt`) retira el objetivo a la vitrina de trofeos.
 - **XP** = progresión permanente (niveles, curva `100·(N−1)^1.5`);
   **monedas** = divisa gastable en la Tienda. Todo movimiento queda en el
   ledger `PointsEntry` — nunca modificar saldos sin su asiento correspondiente,

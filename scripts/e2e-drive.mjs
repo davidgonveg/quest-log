@@ -34,8 +34,8 @@ try {
   await ltForm.getByPlaceholder("Ej. Ponerme en forma").fill("Ponerme en forma");
   await ltForm.getByPlaceholder("💪").fill("💪");
   await ltForm.getByRole("button", { name: "Crear objetivo", exact: true }).click();
-  await page.getByText("0 de 0 semanas cumplidas").first().waitFor({ timeout: 10000 });
-  log("✅", "Objetivo a largo plazo creado y visible con barra de progreso");
+  await page.getByText("0 semanas cumplidas").first().waitFor({ timeout: 10000 });
+  log("✅", "Objetivo a largo plazo creado con Nv. 1 y barra de XP");
 
   // 3. Crear objetivo semanal CRÍTICO vinculado
   await page.locator("summary", { hasText: "Nuevo objetivo semanal" }).click();
@@ -82,6 +82,17 @@ try {
   await page.getByRole("button", { name: /Completar Salir a correr/ }).click();
   await page.getByText("10 / 100 XP").waitFor({ timeout: 10000 });
 
+  // 6b. El objetivo LP acumula la XP de la tarea completada (niveles por objetivo)
+  await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+  const goalCard = await page
+    .locator("section", { hasText: "A largo plazo" })
+    .getByText("10/100 XP")
+    .count();
+  log(
+    goalCard > 0 ? "✅" : "❌",
+    "El objetivo a largo plazo muestra Nv. 1 con 10/100 XP tras la tarea",
+  );
+
   // 🔍 7. Tienda sin saldo: canjear debe estar deshabilitado
   await page.goto(`${BASE}/shop`, { waitUntil: "networkidle" });
   const redeemBtn = page.getByRole("button", { name: "Canjear" }).first();
@@ -116,6 +127,17 @@ try {
   await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
   const failed = await page.getByText("✕ Fallido").count();
   log(failed > 0 ? "🔍" : "❌", "El objetivo crítico figura como '✕ Fallido' tras el cierre");
+
+  // 11. "Conseguido" retira el objetivo LP a la vitrina con su nivel final
+  await page.getByRole("button", { name: "Conseguido" }).click();
+  let vitrina = false;
+  for (let i = 0; i < 10 && !vitrina; i++) {
+    await page.waitForTimeout(1000);
+    await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+    vitrina = (await page.getByText("Vitrina").count()) > 0;
+  }
+  log(vitrina ? "✅" : "❌", "'Conseguido' mueve el objetivo a la vitrina de trofeos");
+  await page.screenshot({ path: `${SHOT_DIR}/05-vitrina.png` });
 } catch (err) {
   log("❌", `Excepción: ${err.message}`);
   await page.screenshot({ path: `${SHOT_DIR}/99-error.png` }).catch(() => {});
