@@ -10,6 +10,7 @@ import {
   deleteWeeklyGoal,
 } from "@/actions/goals";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import { RecurringSection } from "@/components/goals/RecurringSection";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AddDisclosure, Label, PrimaryButton, Select, TextInput } from "@/components/ui/Form";
 
@@ -33,7 +34,7 @@ export default async function GoalsPage() {
   } as const;
 
   const week = await ensureCurrentWeek();
-  const [longTerm, trophies, weekly] = await Promise.all([
+  const [longTerm, trophies, weekly, recurringGoals, recurringTasks] = await Promise.all([
     prisma.longTermGoal.findMany({
       where: { status: "ACTIVE" },
       include: goalInclude,
@@ -48,6 +49,14 @@ export default async function GoalsPage() {
       where: { weekId: week.id },
       include: { tasks: { select: { completedAt: true } }, longTermGoal: true },
       orderBy: { isCritical: "desc" },
+    }),
+    prisma.recurringGoal.findMany({
+      include: { tasks: true, longTermGoal: { select: { title: true, icon: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.recurringTask.findMany({
+      where: { recurringGoalId: null },
+      orderBy: { createdAt: "asc" },
     }),
   ]);
 
@@ -202,10 +211,20 @@ export default async function GoalsPage() {
               />
               Crítico: si no se cumple, hay penalización
             </label>
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="recurring"
+                className="h-5 w-5 accent-[var(--violet)]"
+              />
+              🔁 Repetir cada semana
+            </label>
             <PrimaryButton type="submit">Crear objetivo semanal</PrimaryButton>
           </form>
         </AddDisclosure>
       </section>
+
+      <RecurringSection goals={recurringGoals} tasks={recurringTasks} />
 
       {trophies.length > 0 && (
         <section className="space-y-3">
