@@ -18,15 +18,16 @@ export const STREAK_MULTIPLIER_CAP = 2;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Nº de día en hora local; round absorbe el desfase de ±1h del cambio horario.
-function dayNumber(date: Date): number {
+export function dayNumber(date: Date): number {
   return Math.round(
     new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() / DAY_MS,
   );
 }
 
-// Días con al menos un completado superviviente: cada TASK_UNCOMPLETED cancela
-// el completado aún vivo más reciente de su misma tarea (emparejado por refId).
-function survivingCompletionDays(entries: StreakLedgerEntry[]): Set<number> {
+// Fechas de los completados que sobreviven: cada TASK_UNCOMPLETED cancela el
+// completado aún vivo más reciente de su misma tarea (emparejado por refId).
+// Base tanto de la racha como del heatmap de actividad (history.ts).
+export function survivingCompletions(entries: StreakLedgerEntry[]): Date[] {
   const chronological = entries
     .filter((e) => e.reason === "TASK_COMPLETED" || e.reason === "TASK_UNCOMPLETED")
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
@@ -40,10 +41,12 @@ function survivingCompletionDays(entries: StreakLedgerEntry[]): Set<number> {
       alive.get(key)?.pop();
     }
   }
+  return [...alive.values()].flat();
+}
 
-  const days = new Set<number>();
-  for (const dates of alive.values()) for (const d of dates) days.add(dayNumber(d));
-  return days;
+// Días con al menos un completado superviviente.
+function survivingCompletionDays(entries: StreakLedgerEntry[]): Set<number> {
+  return new Set(survivingCompletions(entries).map(dayNumber));
 }
 
 function runLengthEndingAt(days: Set<number>, end: number): number {

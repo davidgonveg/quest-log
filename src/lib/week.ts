@@ -5,6 +5,7 @@ import { getWeekBounds } from "./week-logic";
 import { planRecurrence } from "./recurrence";
 import { streakFrom, streakIfCompleted } from "./streak";
 import { weekSummaryFrom } from "./week-summary";
+import { activityByDay } from "./history";
 
 export async function getPenaltySettings(): Promise<PenaltySettings> {
   const rows = await prisma.setting.findMany({
@@ -208,4 +209,38 @@ export async function getStreakInfo() {
   const now = new Date();
   const { current, lost } = streakFrom(entries, now);
   return { current, lost, ifCompletedNow: streakIfCompleted(entries, now) };
+}
+
+// Datos de la vista de historial: heatmap de actividad (compleciones por día)
+// y las semanas ya cerradas con su desenlace. XP por semana en un solo barrido
+// de asientos positivos, cubeteado por rango (usuario único, volumen asumible).
+export async function getHistory() {
+  const [taskEntries, weeks, xpEntries] = await Promise.all([
+    prisma.pointsEntry.findMany({
+      where: { reason: { in: ["TASK_COMPLETED", "TASK_UNCOMPLETED"] } },
+      select: { reason: true, refId: true, createdAt: true },
+    }),
+    prisma.week.findMany({
+      where: { closedAt: { not: null } },
+      orderBy: { endDate: "desc" },
+      include: { weeklyGoals: { select: { status: true, isCritical: true } } },
+    }),
+    prisma.pointsEntry.findMany({
+      where: { xpDelta: { gt: 0 } },
+      select: { xpDelta: true, createdAt: true },
+    }),
+  ]);
+
+  const pastWeeks = weeks.map((w) => ({
+    id: w.id,
+    startDate: w.startDate,
+    endDate: w.endDate,
+    goalsCompleted: w.weeklyGoals.filter((g) => g.status === "COMPLETED").length,
+    goalsFailed: w.weeklyGoals.filter((g) => g.status === "FAILED").length,
+    xpGained: xpEntries
+      .filter((e) => e.createdAt >= w.startDate && e.createdAt <= w.endDate)
+      .reduce((s, e) => s + e.xpDelta, 0),
+  }));
+
+  return { activity: activityByDay(taskEntries), pastWeeks };
 }

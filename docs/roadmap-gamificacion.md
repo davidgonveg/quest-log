@@ -101,3 +101,11 @@ Las tres carencias más importantes frente a un juego que engancha:
   (`docs/superpowers/specs/2026-07-08-recurrencia-semanal-design.md`).
 - 2026-07-08 — Racha diaria con multiplicador de monedas
   (`docs/superpowers/specs/2026-07-08-racha-diaria-design.md`).
+- 2026-07-09 — Backup y export de la BD (`scripts/backup.mjs`, ruta
+  `/api/export`, botón en Ajustes). Mejora técnica #1.
+- 2026-07-09 — Bucle diario: botín aleatorio (1.2), día perfecto (1.3) y
+  celebraciones (1.4) — `loot.ts`, `perfect-day.ts`, `CelebrationProvider`.
+- 2026-07-09 — Resumen semanal "Wrapped" (2.2) — `week-summary.ts`,
+  `WeekSummary`, `Week.summarySeen`.
+- 2026-07-09 — Historial con heatmap de actividad (P3) — `history.ts`,
+  vista `/history`, `ActivityHeatmap`.
