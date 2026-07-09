@@ -126,7 +126,11 @@ try {
   );
   await page.getByRole("button", { name: /Completar Salir a correr/ }).click();
   await page.getByText("10 / 100 XP").waitFor({ timeout: 10000 });
-  const coins = await page.locator("header").getByText("6", { exact: true }).count();
+  // Los contadores del header animan (count-up 0→N); espera al valor final
+  // antes de contarlo, o la aserción corre contra un número a medio animar.
+  const coinChip = page.locator("header").getByText("6", { exact: true });
+  await coinChip.first().waitFor({ timeout: 10000 }).catch(() => {});
+  const coins = await coinChip.count();
   const flame = await page.getByLabel("Racha de 1 día").count();
   log(
     coins > 0 && flame > 0 ? "✅" : "❌",
@@ -139,7 +143,9 @@ try {
   // y las aserciones correrían contra el DOM de antes de la revalidación.
   await page.getByRole("button", { name: /Desmarcar Salir a correr/ }).click();
   await page.getByText("0 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
-  const coinsBack = await page.locator("header").getByText("0", { exact: true }).count();
+  const coinChipBack = page.locator("header").getByText("0", { exact: true });
+  await coinChipBack.first().waitFor({ timeout: 10000 }).catch(() => {});
+  const coinsBack = await coinChipBack.count();
   const flameBroken = await page.getByLabel("Racha rota").count();
   log(
     coinsBack > 0 && flameBroken > 0 ? "🔍" : "❌",
@@ -179,9 +185,12 @@ try {
     await page.goto(BASE, { waitUntil: "networkidle" });
     bannerVisible = (await page.getByText("Semana fallida").count()) > 0;
   }
-  if (!bannerVisible) throw new Error("El banner de penalización no apareció tras cerrar la semana");
-  const banner = await page.locator("aside").innerText();
-  log("✅", `Cierre con crítico incumplido → banner: ${JSON.stringify(banner.replace(/\n/g, " | "))}`);
+  if (!bannerVisible) throw new Error("El resumen de penalización no apareció tras cerrar la semana");
+  // El resumen "Wrapped" es un <section> (antes era un <aside> aparte).
+  const banner = await page
+    .locator("section", { hasText: "Resumen de la semana" })
+    .innerText();
+  log("✅", `Cierre con crítico incumplido → resumen: ${JSON.stringify(banner.replace(/\n/g, " | "))}`);
   await page.screenshot({ path: `${SHOT_DIR}/04-penalizacion.png` });
 
   // 9. "Asumido" descarta el banner
