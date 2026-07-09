@@ -79,6 +79,11 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   **monedas** = divisa gastable en la Tienda. Todo movimiento queda en el
   ledger `PointsEntry` — nunca modificar saldos sin su asiento correspondiente,
   dentro de la misma transacción.
+- **Rango por nivel**: identidad del jugador. `rankFor(level)` (puro, en
+  `gamification.ts`, testeado) mapea el nivel a `{ name, accent }` en bandas
+  (Aprendiz→Guardián→Veterano→Campeón→Leyenda; accent = token de color). Se
+  deriva en lectura, nunca se almacena. Lo muestran `PlayerHeader` y el overlay
+  de subida de nivel.
 - **Botín** 🎁 y **día perfecto** ⚡ (bucle diario): al completar una tarea,
   ~15 % de probabilidad de botín (`rollLoot`, puro: 5-30 🪙, asiento `LOOT`,
   refId=tarea) y, si con ello se cierran todas las tareas que **vencen hoy**
@@ -113,7 +118,13 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
 - Comentarios: explican el **porqué** o una restricción no evidente, no el qué.
 - Tokens de diseño en `globals.css` (`@theme` de Tailwind 4): colores solo vía
   tokens (`bg-surface`, `text-gold`…), nunca hex sueltos en componentes.
-  Firma visual: chaflanes `.hud-chamfer(-sm)` en elementos HUD.
+  Firma visual: chaflanes `.hud-chamfer(-sm)` y paneles con profundidad
+  `.hud-panel` (gradiente + glow interior) en elementos HUD.
+- **Animación con gusto**: contadores que suben (`ui/AnimatedNumber`) y anillo
+  radial de progreso (`ui/RadialProgress`); celebraciones en `TaskRow`/
+  `CelebrationProvider`. **Toda animación nueva debe neutralizarse** en el bloque
+  `@media (prefers-reduced-motion: reduce)` de `globals.css` (degradar a estado
+  final; ocultar overlays transitorios).
 - Zonas táctiles ≥ 44px (`min-h-11`/`min-h-14`); acciones principales al alcance
   del pulgar (derecha/abajo).
 - TDD en dominio: test primero en `src/lib/*.test.ts` para lógica nueva.
