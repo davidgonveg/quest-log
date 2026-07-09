@@ -101,6 +101,17 @@ body {
   animation: rise-in 0.35s ease-out both;
 }
 
+/* Contador que "salta" al cambiar de valor. */
+@keyframes num-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.num-bump {
+  display: inline-block;
+  animation: num-bump 0.35s ease-out;
+}
+
 /* Celebración: partículas al marcar una tarea. */
 @keyframes check-burst {
   from { opacity: 1; transform: translate(0, 0) scale(1); }
@@ -131,7 +142,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .xp-shine, .rise-in, .check-particle, .celebrate-toast, .levelup-badge {
+  .xp-shine, .rise-in, .check-particle, .celebrate-toast, .levelup-badge, .num-bump {
     animation: none;
   }
   /* Sin animación, las partículas no deben quedarse pegadas en pantalla. */
