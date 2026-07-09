@@ -175,5 +175,6 @@ body {
   .num-bump, .reward-float, .row-sweep, .check-pop {
     animation: none;
   }
+  /* Sin animación, estos overlays transitorios no deben quedarse pegados en pantalla. */
   .check-particle, .reward-float, .row-sweep { display: none; }
 }

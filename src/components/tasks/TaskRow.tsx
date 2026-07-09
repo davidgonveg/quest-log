@@ -71,6 +71,7 @@ export function TaskRow({
           </p>
         </div>
         <span
+          key={burst}
           aria-hidden
           className={`hud-chamfer-sm relative flex h-11 w-11 shrink-0 items-center justify-center border text-lg transition-colors ${
             task.completed
