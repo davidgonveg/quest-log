@@ -121,6 +121,35 @@ body {
   animation: check-burst 0.5s ease-out forwards;
 }
 
+/* Recompensa flotante (+XP/monedas) que sube y se desvanece al completar. */
+@keyframes reward-float {
+  0% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  20% { opacity: 1; transform: translateY(-2px) scale(1); }
+  100% { opacity: 0; transform: translateY(-22px) scale(1); }
+}
+.reward-float {
+  animation: reward-float 0.9s ease-out forwards;
+}
+
+/* Barrido dorado que recorre la fila al completar. */
+@keyframes row-sweep {
+  from { transform: translateX(-100%); opacity: 0.6; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+.row-sweep {
+  animation: row-sweep 0.6s ease-out forwards;
+}
+
+/* Pop elástico del check al marcar. */
+@keyframes check-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+.check-pop {
+  animation: check-pop 0.4s cubic-bezier(0.2, 1.4, 0.5, 1);
+}
+
 /* Aviso flotante de botín / día perfecto. */
 @keyframes toast-pop {
   0% { opacity: 0; transform: translateY(-8px) scale(0.9); }
@@ -142,9 +171,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .xp-shine, .rise-in, .check-particle, .celebrate-toast, .levelup-badge, .num-bump {
+  .xp-shine, .rise-in, .check-particle, .celebrate-toast, .levelup-badge,
+  .num-bump, .reward-float, .row-sweep, .check-pop {
     animation: none;
   }
-  /* Sin animación, las partículas no deben quedarse pegadas en pantalla. */
-  .check-particle { display: none; }
+  .check-particle, .reward-float, .row-sweep { display: none; }
 }

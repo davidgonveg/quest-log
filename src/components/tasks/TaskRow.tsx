@@ -29,11 +29,21 @@ export function TaskRow({
   onToggle: (id: string) => void;
   onDelete?: (id: string) => void;
 }) {
-  // Cambia en cada compleción para relanzar la animación de partículas.
+  // Cambia en cada compleción para relanzar las animaciones (partículas,
+  // pop del check, flotante de recompensa y barrido de la fila).
   const [burst, setBurst] = useState(0);
+  const coinGain = task.coinReward + task.streakBonus;
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="relative flex items-center gap-1">
+      {/* Barrido dorado sobre toda la fila al marcar. */}
+      {burst > 0 && (
+        <span
+          key={`sweep-${burst}`}
+          aria-hidden
+          className="row-sweep pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-gold-soft to-transparent"
+        />
+      )}
       {/* Toda la fila es pulsable; el check queda a la derecha,
           en la zona natural del pulgar. */}
       <button
@@ -66,7 +76,7 @@ export function TaskRow({
             task.completed
               ? "border-green bg-green-soft text-green"
               : "border-edge bg-surface-2 text-transparent"
-          }`}
+          } ${burst > 0 ? "check-pop" : ""}`}
         >
           ✓
           {burst > 0 && (
@@ -78,6 +88,16 @@ export function TaskRow({
                   style={{ "--dx": `${dx}px`, "--dy": `${dy}px` } as React.CSSProperties}
                 />
               ))}
+            </span>
+          )}
+          {/* Recompensa flotante que sube desde el check. */}
+          {burst > 0 && (
+            <span
+              key={`reward-${burst}`}
+              aria-hidden
+              className="reward-float pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 whitespace-nowrap font-display text-xs font-bold text-gold"
+            >
+              +{task.xpReward} XP · +{coinGain} 🪙
             </span>
           )}
         </span>
