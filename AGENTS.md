@@ -64,8 +64,14 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
 - **Cierre de semana**: objetivos semanales ACTIVE con todas sus tareas hechas →
   COMPLETED; el resto → FAILED. Cada crítico fallido resta XP/monedas
   (configurable, recortado para no dejar saldos negativos) y genera un mensaje
-  duro de `messages.ts` que el dashboard muestra hasta pulsarse "Asumido".
-  **Los mensajes son deliberadamente severos — no suavizarlos.**
+  duro de `messages.ts`. **Los mensajes son deliberadamente severos — no
+  suavizarlos.**
+- **Resumen semanal "Wrapped"** 📊: al cerrarse una semana, el dashboard muestra
+  un resumen (`WeekSummary`) hasta descartarlo (`summarySeen`): XP/monedas
+  ganadas, tareas hechas, mejor día, objetivos logrados/fallados y, si la semana
+  falló, el mensaje duro y lo perdido integrados dentro. Se deriva en lectura
+  del ledger + objetivos (`weekSummaryFrom`, puro). `getPendingSummary()` solo
+  mira la **última** semana cerrada para no reabrir resúmenes antiguos.
 - **Niveles por objetivo LP**: su XP se calcula en lectura con `goalXpFrom()`
   (tareas completadas + bonus por weeklyGoal COMPLETED), nunca se almacena.
   "Conseguido" (`completedAt`) retira el objetivo a la vitrina de trofeos.

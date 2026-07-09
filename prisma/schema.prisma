@@ -37,6 +37,7 @@ model Week {
   closedAt    DateTime?
   penaltyMsg  String? // mensaje duro elegido al cierre; null si semana limpia
   msgSeen     Boolean      @default(false)
+  summarySeen Boolean      @default(false) // resumen "Wrapped" ya descartado
   weeklyGoals WeeklyGoal[]
   tasks       Task[]
 }

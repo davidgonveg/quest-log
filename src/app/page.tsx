@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { ensureCurrentWeek, getPendingPenalty, getStreakInfo, getUser } from "@/lib/week";
+import { ensureCurrentWeek, getPendingSummary, getStreakInfo, getUser } from "@/lib/week";
 import { dayIndex } from "@/lib/week-logic";
 import type { Difficulty } from "@/lib/gamification";
 import { coinsWithStreak } from "@/lib/streak";
@@ -7,16 +7,16 @@ import { PlayerHeader } from "@/components/dashboard/PlayerHeader";
 import { WeekProgress } from "@/components/dashboard/WeekProgress";
 import { TodayTasks } from "@/components/dashboard/TodayTasks";
 import type { TaskItemData } from "@/components/tasks/TaskRow";
-import { PenaltyBanner } from "@/components/dashboard/PenaltyBanner";
+import { WeekSummary } from "@/components/dashboard/WeekSummary";
 
 // La página depende de la BD y de la fecha actual: nunca prerenderizar.
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
   const week = await ensureCurrentWeek();
-  const [user, penaltyWeek, fullWeek, streak] = await Promise.all([
+  const [user, pendingSummary, fullWeek, streak] = await Promise.all([
     getUser(),
-    getPendingPenalty(),
+    getPendingSummary(),
     prisma.week.findUniqueOrThrow({
       where: { id: week.id },
       include: {
@@ -26,12 +26,6 @@ export default async function Dashboard() {
     }),
     getStreakInfo(),
   ]);
-
-  const penaltyEntry = penaltyWeek
-    ? await prisma.pointsEntry.findFirst({
-        where: { reason: "PENALTY", refId: penaltyWeek.id },
-      })
-    : null;
 
   const today = dayIndex(new Date());
   const daysLeft = 6 - today;
@@ -66,13 +60,8 @@ export default async function Dashboard() {
 
   return (
     <div className="space-y-4">
-      {penaltyWeek?.penaltyMsg && (
-        <PenaltyBanner
-          weekId={penaltyWeek.id}
-          message={penaltyWeek.penaltyMsg}
-          xpLost={Math.abs(penaltyEntry?.xpDelta ?? 0)}
-          coinsLost={Math.abs(penaltyEntry?.coinDelta ?? 0)}
-        />
+      {pendingSummary && (
+        <WeekSummary weekId={pendingSummary.weekId} summary={pendingSummary.summary} />
       )}
 
       <PlayerHeader

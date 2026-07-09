@@ -4,9 +4,13 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { closeWeek, ensureCurrentWeek } from "@/lib/week";
 
-// "Asumido": descarta el banner de penalización del dashboard.
-export async function dismissPenalty(weekId: string): Promise<void> {
-  await prisma.week.update({ where: { id: weekId }, data: { msgSeen: true } });
+// Cierra el resumen "Wrapped" de la semana; marca también el mensaje de
+// penalización como visto, ya que va integrado en el propio resumen.
+export async function dismissSummary(weekId: string): Promise<void> {
+  await prisma.week.update({
+    where: { id: weekId },
+    data: { summarySeen: true, msgSeen: true },
+  });
   revalidatePath("/");
 }
 

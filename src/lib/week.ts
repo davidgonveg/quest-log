@@ -4,6 +4,7 @@ import { closeWeekPlan } from "./week-logic";
 import { getWeekBounds } from "./week-logic";
 import { planRecurrence } from "./recurrence";
 import { streakFrom, streakIfCompleted } from "./streak";
+import { weekSummaryFrom } from "./week-summary";
 
 export async function getPenaltySettings(): Promise<PenaltySettings> {
   const rows = await prisma.setting.findMany({
@@ -162,12 +163,38 @@ export async function applyRecurrence(weekId: string): Promise<void> {
   ]);
 }
 
-// Última semana cerrada con penalización cuyo mensaje aún no se ha descartado.
-export async function getPendingPenalty() {
-  return prisma.week.findFirst({
-    where: { closedAt: { not: null }, penaltyMsg: { not: null }, msgSeen: false },
+// Resumen "Wrapped" pendiente: solo la semana cerrada más reciente y solo si
+// aún no se descartó. Mirar únicamente la última evita reabrir resúmenes de
+// semanas antiguas al ir descartándolos.
+export async function getPendingSummary() {
+  const week = await prisma.week.findFirst({
+    where: { closedAt: { not: null } },
     orderBy: { endDate: "desc" },
   });
+  if (!week || week.summarySeen) return null;
+  const summary = await getWeekSummary(week);
+  return { weekId: week.id, summary };
+}
+
+// Deriva el resumen de una semana en lectura: asientos del ledger en su rango
+// de fechas + estado de sus objetivos. No almacena nada.
+export async function getWeekSummary(week: {
+  id: string;
+  startDate: Date;
+  endDate: Date;
+  penaltyMsg: string | null;
+}) {
+  const [entries, weeklyGoals] = await Promise.all([
+    prisma.pointsEntry.findMany({
+      where: { createdAt: { gte: week.startDate, lte: week.endDate } },
+      select: { reason: true, xpDelta: true, coinDelta: true, createdAt: true },
+    }),
+    prisma.weeklyGoal.findMany({
+      where: { weekId: week.id },
+      select: { isCritical: true, status: true },
+    }),
+  ]);
+  return weekSummaryFrom({ week, entries, weeklyGoals });
 }
 
 // Racha actual derivada del ledger + la racha que quedaría al completar una
