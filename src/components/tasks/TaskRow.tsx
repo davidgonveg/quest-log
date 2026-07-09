@@ -70,6 +70,7 @@ export function TaskRow({
             )}
           </p>
         </div>
+        {/* key={burst} remonta el check para relanzar el pop en cada marcado; a cambio, el color no hace fade (aceptado: el pop y las partículas dominan). */}
         <span
           key={burst}
           aria-hidden

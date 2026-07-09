@@ -1,15 +1,13 @@
-"use client";
-
 import { levelProgress, rankFor, type RankAccent } from "@/lib/gamification";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
 // Clases literales por acento (Tailwind JIT no ve clases dinámicas).
-const ACCENT: Record<RankAccent, { text: string; chip: string }> = {
-  violet: { text: "text-violet", chip: "bg-violet-soft text-violet" },
-  green: { text: "text-green", chip: "bg-green-soft text-green" },
-  flame: { text: "text-flame", chip: "bg-flame-soft text-flame" },
-  gold: { text: "text-gold", chip: "bg-gold-soft text-gold" },
+const ACCENT: Record<RankAccent, { text: string }> = {
+  violet: { text: "text-violet" },
+  green: { text: "text-green" },
+  flame: { text: "text-flame" },
+  gold: { text: "text-gold" },
 };
 
 export function PlayerHeader({
