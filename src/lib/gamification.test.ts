@@ -4,6 +4,7 @@ import {
   goalXpFrom,
   levelForXp,
   levelProgress,
+  rankFor,
   rewardsForDifficulty,
   xpToReachLevel,
 } from "./gamification";
@@ -116,5 +117,21 @@ describe("goalXpFrom", () => {
       { status: "FAILED", tasks: [] },
     ];
     expect(goalXpFrom(weeklyGoals)).toBe(50);
+  });
+});
+
+describe("rankFor", () => {
+  it("asigna nombre y acento por banda de nivel", () => {
+    expect(rankFor(1)).toEqual({ name: "Aprendiz", accent: "violet" });
+    expect(rankFor(4)).toEqual({ name: "Aprendiz", accent: "violet" });
+    expect(rankFor(5)).toEqual({ name: "Guardián", accent: "green" });
+    expect(rankFor(9)).toEqual({ name: "Guardián", accent: "green" });
+    expect(rankFor(10)).toEqual({ name: "Veterano", accent: "flame" });
+    expect(rankFor(20)).toEqual({ name: "Campeón", accent: "gold" });
+    expect(rankFor(35)).toEqual({ name: "Leyenda", accent: "gold" });
+  });
+
+  it("nunca falla por debajo de 1 (defensa)", () => {
+    expect(rankFor(0).name).toBe("Aprendiz");
   });
 });

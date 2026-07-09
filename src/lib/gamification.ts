@@ -76,3 +76,24 @@ export function computePenalty(
   const coinDelta = -Math.min(user.coins, settings.penaltyCoins * failedCriticalCount) + 0;
   return { xpDelta, coinDelta };
 }
+
+export type RankAccent = "violet" | "green" | "flame" | "gold";
+export interface Rank {
+  name: string;
+  accent: RankAccent;
+}
+
+// Rango con nombre por nivel: identidad del jugador. Se deriva del nivel,
+// nunca se almacena. Ascendente; el nivel más alto reutiliza el oro (prestigio).
+const RANK_BANDS: { min: number; name: string; accent: RankAccent }[] = [
+  { min: 35, name: "Leyenda", accent: "gold" },
+  { min: 20, name: "Campeón", accent: "gold" },
+  { min: 10, name: "Veterano", accent: "flame" },
+  { min: 5, name: "Guardián", accent: "green" },
+  { min: 1, name: "Aprendiz", accent: "violet" },
+];
+
+export function rankFor(level: number): Rank {
+  const band = RANK_BANDS.find((b) => level >= b.min) ?? RANK_BANDS[RANK_BANDS.length - 1];
+  return { name: band.name, accent: band.accent };
+}

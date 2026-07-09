@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import type { ToggleResult } from "@/actions/tasks";
 import { PERFECT_DAY_BONUS } from "@/lib/perfect-day";
+import { rankFor } from "@/lib/gamification";
 
 interface Toast {
   id: number;
@@ -81,6 +82,9 @@ export function CelebrationProvider({ children }: { children: React.ReactNode })
           <div className="levelup-badge hud-chamfer flex h-32 w-32 items-center justify-center border-2 border-gold bg-gold-soft">
             <span className="font-display text-6xl font-bold text-gold">{levelUp}</span>
           </div>
+          <p className="font-display text-lg font-semibold uppercase tracking-[0.18em] text-gold">
+            {rankFor(levelUp).name}
+          </p>
           <p className="text-xs text-muted">Toca para continuar</p>
         </button>
       )}

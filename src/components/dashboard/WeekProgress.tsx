@@ -1,5 +1,6 @@
 import { Card, SectionTitle } from "@/components/ui/Card";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { RadialProgress } from "@/components/ui/RadialProgress";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 
 interface GoalChip {
   id: string;
@@ -32,12 +33,20 @@ export function WeekProgress({
         </span>
       </div>
 
-      <div className="mt-3 flex items-center gap-3">
-        <p className="font-display text-3xl font-bold text-violet">{donePct}%</p>
+      <div className="mt-3 flex items-center gap-4">
+        <RadialProgress pct={donePct}>
+          <span className="font-display text-2xl font-bold text-violet">
+            <AnimatedNumber value={donePct} />%
+          </span>
+        </RadialProgress>
         <div className="flex-1">
-          <ProgressBar pct={donePct} />
+          <p className="font-display text-sm font-semibold">
+            {doneCount} de {totalCount} tareas
+          </p>
           <p className="mt-1 text-xs text-muted">
-            {doneCount} de {totalCount} tareas completadas
+            {donePct === 100 && totalCount > 0
+              ? "¡Semana redonda!"
+              : "Completadas esta semana"}
           </p>
         </div>
       </div>
