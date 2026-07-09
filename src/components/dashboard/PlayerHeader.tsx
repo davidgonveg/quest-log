@@ -1,5 +1,16 @@
-import { levelProgress } from "@/lib/gamification";
+"use client";
+
+import { levelProgress, rankFor, type RankAccent } from "@/lib/gamification";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+
+// Clases literales por acento (Tailwind JIT no ve clases dinámicas).
+const ACCENT: Record<RankAccent, { text: string; chip: string }> = {
+  violet: { text: "text-violet", chip: "bg-violet-soft text-violet" },
+  green: { text: "text-green", chip: "bg-green-soft text-green" },
+  flame: { text: "text-flame", chip: "bg-flame-soft text-flame" },
+  gold: { text: "text-gold", chip: "bg-gold-soft text-gold" },
+};
 
 export function PlayerHeader({
   name,
@@ -15,15 +26,20 @@ export function PlayerHeader({
   lostStreak: number;
 }) {
   const p = levelProgress(xp);
+  const rank = rankFor(p.level);
+  const accent = ACCENT[rank.accent];
   const broken = streak === 0;
 
   return (
-    <header className="hud-chamfer rise-in border border-edge bg-surface p-4">
+    <header className="hud-chamfer hud-panel rise-in border border-edge p-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted">{name}</p>
           <p className="font-display text-3xl font-bold leading-tight">
-            Nivel <span className="text-violet">{p.level}</span>
+            Nivel <span className={accent.text}>{p.level}</span>
+          </p>
+          <p className={`mt-0.5 font-display text-xs font-semibold uppercase tracking-[0.18em] ${accent.text}`}>
+            {rank.name}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -40,7 +56,7 @@ export function PlayerHeader({
           </div>
           <div className="hud-chamfer-sm flex items-center gap-1.5 bg-gold-soft px-3 py-2">
             <span aria-hidden>🪙</span>
-            <span className="font-display text-lg font-semibold text-gold">{coins}</span>
+            <AnimatedNumber value={coins} className="font-display text-lg font-semibold text-gold" />
           </div>
         </div>
       </div>
@@ -55,9 +71,9 @@ export function PlayerHeader({
         <ProgressBar pct={p.pct} color="var(--gold)" shine />
         <p className="mt-1.5 flex justify-between text-xs text-muted">
           <span>
-            {p.current} / {p.needed} XP
+            <AnimatedNumber value={p.current} /> / {p.needed} XP
           </span>
-          <span>Nivel {p.level + 1} a la vista</span>
+          <span>Faltan {Math.max(0, p.needed - p.current)} XP</span>
         </p>
       </div>
     </header>
