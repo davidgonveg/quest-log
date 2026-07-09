@@ -91,7 +91,11 @@ model Redemption {
 }
 
 // Ledger auditable de todo movimiento de XP/monedas.
-// reason: TASK_COMPLETED | TASK_UNCOMPLETED | GOAL_COMPLETED | PENALTY | REDEMPTION
+// reason: TASK_COMPLETED | TASK_UNCOMPLETED | GOAL_COMPLETED | PENALTY
+//       | REDEMPTION | LOOT | PERFECT_DAY
+// LOOT (refId=task): botín variable al completar. PERFECT_DAY
+// (refId=`perfect:<weekId>:<día>`): bonus por completar el día; su reverso al
+// desmarcar es otro asiento PERFECT_DAY negativo con el mismo refId.
 model PointsEntry {
   id        String   @id @default(cuid())
   xpDelta   Int      @default(0)

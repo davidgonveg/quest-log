@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useOptimistic, useTransition } from "react";
 import { toggleTask } from "@/actions/tasks";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import { useCelebrate } from "@/components/celebration/CelebrationProvider";
 import { TaskRow, type TaskItemData } from "@/components/tasks/TaskRow";
 
 export function TodayTasks({ tasks }: { tasks: TaskItemData[] }) {
+  const celebrate = useCelebrate();
   const [, startTransition] = useTransition();
   const [optimistic, setOptimistic] = useOptimistic(
     tasks,
@@ -36,7 +38,7 @@ export function TodayTasks({ tasks }: { tasks: TaskItemData[] }) {
                 onToggle={(id) =>
                   startTransition(async () => {
                     setOptimistic(id);
-                    await toggleTask(id);
+                    celebrate(await toggleTask(id));
                   })
                 }
               />

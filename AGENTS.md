@@ -73,6 +73,16 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   **monedas** = divisa gastable en la Tienda. Todo movimiento queda en el
   ledger `PointsEntry` — nunca modificar saldos sin su asiento correspondiente,
   dentro de la misma transacción.
+- **Botín** 🎁 y **día perfecto** ⚡ (bucle diario): al completar una tarea,
+  ~15 % de probabilidad de botín (`rollLoot`, puro: 5-30 🪙, asiento `LOOT`,
+  refId=tarea) y, si con ello se cierran todas las tareas que **vencen hoy**
+  (`isPerfectDay`, puro; las de dueDay null no cuentan), un bonus fijo
+  (`PERFECT_DAY`, refId=`perfect:<weekId>:<día>`). Ninguno se multiplica por
+  racha. Desmarcar devuelve fielmente ambos: el botín de esa compleción y, si
+  el día deja de ser perfecto, el bonus (asiento `PERFECT_DAY` negativo, mismo
+  refId). La UI los celebra vía `CelebrationProvider` (toasts + overlay de
+  subida de nivel con vibración; partículas en el check en `TaskRow`), siempre
+  respetando `prefers-reduced-motion`.
 - **Racha diaria** 🔥: días consecutivos con ≥1 tarea completada, derivada del
   ledger en lectura (`streak.ts`, puro: un `TASK_UNCOMPLETED` cancela el
   completado vivo más reciente de su tarea — sin contadores almacenados).

@@ -3,11 +3,13 @@
 import { useOptimistic, useTransition } from "react";
 import { deleteTask, toggleTask } from "@/actions/tasks";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import { useCelebrate } from "@/components/celebration/CelebrationProvider";
 import { DAY_NAMES } from "@/lib/week-logic";
 import { TaskRow, type TaskItemData } from "./TaskRow";
 
 // Lista completa de la semana agrupada por día, con toggle y borrado.
 export function WeekTasks({ tasks }: { tasks: TaskItemData[] }) {
+  const celebrate = useCelebrate();
   const [, startTransition] = useTransition();
   const [optimistic, setOptimistic] = useOptimistic(
     tasks,
@@ -50,7 +52,7 @@ export function WeekTasks({ tasks }: { tasks: TaskItemData[] }) {
                   onToggle={(id) =>
                     startTransition(async () => {
                       setOptimistic({ type: "toggle", id });
-                      await toggleTask(id);
+                      celebrate(await toggleTask(id));
                     })
                   }
                   onDelete={(id) =>

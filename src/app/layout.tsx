@@ -3,6 +3,7 @@ import { Chakra_Petch, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { RegisterSW } from "@/components/layout/RegisterSW";
+import { CelebrationProvider } from "@/components/celebration/CelebrationProvider";
 
 const display = Chakra_Petch({
   variable: "--font-display",
@@ -41,10 +42,12 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${display.variable} ${body.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <div className="mx-auto flex min-h-dvh max-w-md flex-col">
-          <main className="flex-1 px-4 pb-28 pt-4">{children}</main>
-          <BottomNav />
-        </div>
+        <CelebrationProvider>
+          <div className="mx-auto flex min-h-dvh max-w-md flex-col">
+            <main className="flex-1 px-4 pb-28 pt-4">{children}</main>
+            <BottomNav />
+          </div>
+        </CelebrationProvider>
         <RegisterSW />
       </body>
     </html>

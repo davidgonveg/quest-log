@@ -101,8 +101,39 @@ body {
   animation: rise-in 0.35s ease-out both;
 }
 
+/* Celebración: partículas al marcar una tarea. */
+@keyframes check-burst {
+  from { opacity: 1; transform: translate(0, 0) scale(1); }
+  to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+}
+.check-particle {
+  animation: check-burst 0.5s ease-out forwards;
+}
+
+/* Aviso flotante de botín / día perfecto. */
+@keyframes toast-pop {
+  0% { opacity: 0; transform: translateY(-8px) scale(0.9); }
+  15% { opacity: 1; transform: translateY(0) scale(1); }
+  85% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+}
+.celebrate-toast {
+  animation: toast-pop 2.6s ease-in-out forwards;
+}
+
+/* Overlay de subida de nivel: fogonazo dorado a pantalla completa. */
+@keyframes levelup-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+.levelup-badge {
+  animation: levelup-in 0.4s cubic-bezier(0.2, 1.4, 0.5, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .xp-shine, .rise-in {
+  .xp-shine, .rise-in, .check-particle, .celebrate-toast, .levelup-badge {
     animation: none;
   }
+  /* Sin animación, las partículas no deben quedarse pegadas en pantalla. */
+  .check-particle { display: none; }
 }
