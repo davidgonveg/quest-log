@@ -25,11 +25,22 @@ export function BottomNav() {
               key={tab.href}
               href={tab.href}
               aria-current={active ? "page" : undefined}
-              className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] transition-colors ${
+              className={`relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] transition-colors ${
                 active ? "text-gold" : "text-muted hover:text-ink"
               }`}
             >
-              <span className="text-lg leading-none" aria-hidden>
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute inset-x-4 top-0 h-0.5 rounded-full bg-gold"
+                  style={{ boxShadow: "0 0 8px var(--gold)" }}
+                />
+              )}
+              <span
+                className="text-lg leading-none"
+                aria-hidden
+                style={active ? { filter: "drop-shadow(0 0 6px var(--gold-soft))" } : undefined}
+              >
                 {tab.icon}
               </span>
               <span className={`font-display ${active ? "font-semibold" : ""}`}>
