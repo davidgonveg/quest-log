@@ -11,6 +11,7 @@ import {
 } from "@/actions/goals";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { RecurringSection } from "@/components/goals/RecurringSection";
+import { TrophyCard } from "@/components/goals/TrophyCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { AddDisclosure, Label, PrimaryButton, Select, TextInput } from "@/components/ui/Form";
 
@@ -229,23 +230,22 @@ export default async function GoalsPage() {
       {trophies.length > 0 && (
         <section className="space-y-3">
           <SectionTitle>🏆 Vitrina</SectionTitle>
-          {trophies.map((g) => (
-            <Card key={g.id} className="flex items-center justify-between opacity-90">
-              <p className="text-sm font-medium">
-                {g.icon ? `${g.icon} ` : ""}
-                {g.title}
-                <span className="ml-2 font-display font-semibold text-violet">
-                  Nv. {levelForXp(goalXpFrom(g.weeklyGoals))}
-                </span>
-              </p>
-              <p className="shrink-0 text-xs text-muted">
-                {g.completedAt?.toLocaleDateString("es-ES", {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            </Card>
-          ))}
+          <div className="space-y-2">
+            {trophies.map((g) => (
+              <TrophyCard
+                key={g.id}
+                title={g.title}
+                icon={g.icon}
+                level={levelForXp(goalXpFrom(g.weeklyGoals))}
+                month={
+                  g.completedAt?.toLocaleDateString("es-ES", {
+                    month: "long",
+                    year: "numeric",
+                  }) ?? ""
+                }
+              />
+            ))}
+          </div>
         </section>
       )}
     </div>
