@@ -112,6 +112,11 @@ body {
   animation: num-bump 0.35s ease-out;
 }
 
+/* Trazo del anillo de progreso: anima al cambiar el porcentaje. */
+.radial-ring {
+  transition: stroke-dashoffset 0.7s ease-out;
+}
+
 /* Celebración: partículas al marcar una tarea. */
 @keyframes check-burst {
   from { opacity: 1; transform: translate(0, 0) scale(1); }
@@ -177,4 +182,5 @@ body {
   }
   /* Sin animación, estos overlays transitorios no deben quedarse pegados en pantalla. */
   .check-particle, .reward-float, .row-sweep { display: none; }
+  .radial-ring { transition: none; }
 }
