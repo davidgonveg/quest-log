@@ -44,6 +44,22 @@ export default async function SettingsPage() {
         </form>
       </Card>
 
+      <Card>
+        <SectionTitle>Copia de seguridad</SectionTitle>
+        <p className="mt-2 text-sm text-muted">
+          Descarga una copia íntegra de todos tus datos (tareas, objetivos,
+          progreso y monedas). Guárdala fuera del servidor: es tu red de
+          seguridad si algo le pasa a la base de datos.
+        </p>
+        <a
+          href="/api/export"
+          download
+          className="hud-chamfer-sm mt-3 flex min-h-11 w-full items-center justify-center border border-edge bg-surface-2 px-4 font-display text-sm font-semibold transition-opacity active:opacity-70"
+        >
+          Descargar copia
+        </a>
+      </Card>
+
       <Card className="border-red/30">
         <SectionTitle>Zona de cierre</SectionTitle>
         <p className="mt-2 text-sm text-muted">

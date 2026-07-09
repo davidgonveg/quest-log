@@ -18,7 +18,28 @@ npx prisma migrate dev   # nueva migración tras cambiar schema.prisma
 npm run db:seed          # datos de demostración (idempotente)
 docker compose up -d --build   # despliegue real; BD en volumen quest-data
 node scripts/e2e-drive.mjs     # e2e con Playwright (app corriendo + Edge)
+node scripts/backup.mjs [dest] # snapshot consistente de la BD (VACUUM INTO)
 ```
+
+### Copia de seguridad y restauración
+
+El volumen `quest-data` es la **única copia** de los datos. Dos vías de backup,
+ambas con `VACUUM INTO` (snapshot íntegro aunque la app escriba):
+
+```bash
+# Desde el contenedor a un fichero del volumen, y luego al host:
+docker compose exec app node scripts/backup.mjs /data/backups/quest.db
+docker cp quest-log:/data/backups/quest.db ./quest-backup.db
+# O desde la app: Ajustes → "Descargar copia" (ruta GET /api/export).
+```
+
+Restaurar: `docker compose down`, copiar el backup al volumen como
+`/data/quest.db` (`docker run --rm -v quest-data:/data -v "$PWD":/src alpine
+cp /src/quest-backup.db /data/quest.db`), `docker compose up -d`.
+
+> **Única ruta HTTP de la app**: `src/app/api/export/route.ts` (GET). Es la
+> excepción justificada al "sin API REST": una descarga de fichero no se puede
+> servir desde una Server Action. No añadir más rutas sin la misma justificación.
 
 ## Arquitectura
 
