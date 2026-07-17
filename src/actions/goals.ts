@@ -65,7 +65,17 @@ export async function createWeeklyGoal(formData: FormData): Promise<void> {
 }
 
 export async function deleteWeeklyGoal(id: string): Promise<void> {
-  await prisma.weeklyGoal.delete({ where: { id } });
+  // Los checks de un hábito no tienen sentido sueltos: se borran con él
+  // (con SetNull reaparecerían como tareas sueltas ya completadas).
+  const goal = await prisma.weeklyGoal.findUnique({ where: { id }, select: { targetDays: true } });
+  if (goal?.targetDays != null) {
+    await prisma.$transaction([
+      prisma.task.deleteMany({ where: { weeklyGoalId: id } }),
+      prisma.weeklyGoal.delete({ where: { id } }),
+    ]);
+  } else {
+    await prisma.weeklyGoal.delete({ where: { id } });
+  }
   revalidateGoalPages();
 }
 

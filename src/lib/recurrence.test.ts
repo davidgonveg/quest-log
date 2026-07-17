@@ -19,6 +19,8 @@ const goalTpl = (over: Partial<RecurringGoalTemplate> = {}): RecurringGoalTempla
   title: "Entrenar 4 días",
   isCritical: true,
   longTermGoalId: "lt1",
+  targetDays: null,
+  habitDifficulty: null,
   active: true,
   tasks: [],
   ...over,
@@ -99,6 +101,29 @@ describe("planRecurrence", () => {
       xpReward: 25,
       coinReward: 15,
     });
+  });
+
+  it("propaga targetDays y habitDifficulty de los objetivos-hábito", () => {
+    const plan = planRecurrence({
+      goals: [goalTpl({ targetDays: 4, habitDifficulty: "EASY" })],
+      standaloneTasks: [],
+      ...empty,
+    });
+    expect(plan.goals[0]).toMatchObject({ targetDays: 4, habitDifficulty: "EASY" });
+  });
+
+  it("los objetivos normales se instancian con targetDays y habitDifficulty null", () => {
+    const plan = planRecurrence({ goals: [goalTpl()], standaloneTasks: [], ...empty });
+    expect(plan.goals[0]).toMatchObject({ targetDays: null, habitDifficulty: null });
+  });
+
+  it("una habitDifficulty desconocida cae a MEDIUM", () => {
+    const plan = planRecurrence({
+      goals: [goalTpl({ targetDays: 3, habitDifficulty: "LEGENDARY" })],
+      standaloneTasks: [],
+      ...empty,
+    });
+    expect(plan.goals[0].habitDifficulty).toBe("MEDIUM");
   });
 
   it("una dificultad desconocida cae a MEDIUM", () => {

@@ -1,4 +1,5 @@
 import { computePenalty, type PenaltySettings } from "./gamification";
+import { habitCheckDays } from "./habits";
 import { pickPenaltyMessage } from "./messages";
 
 // Lógica pura de semanas (sin base de datos), testeable de forma aislada.
@@ -30,6 +31,7 @@ interface CloseWeekInput {
     id: string;
     isCritical: boolean;
     status: string;
+    targetDays?: number | null; // hábito: meta de días/semana; null = objetivo normal
     tasks: { completedAt: Date | null }[];
   }[];
   user: { xp: number; coins: number };
@@ -46,14 +48,18 @@ export interface CloseWeekPlan {
 
 // Decide el resultado del cierre de semana: qué objetivos quedan COMPLETED
 // o FAILED, la penalización por críticos fallidos y el mensaje de decepción.
-// Un objetivo ACTIVE se completa solo si tiene tareas y todas están hechas.
+// Un objetivo ACTIVE se completa solo si tiene tareas y todas están hechas;
+// un hábito (targetDays), si tiene checks en al menos esos días distintos.
 export function closeWeekPlan(input: CloseWeekInput): CloseWeekPlan {
   const goalUpdates: CloseWeekPlan["goalUpdates"] = [];
   let failedCritical = 0;
 
   for (const g of input.weeklyGoals) {
     if (g.status !== "ACTIVE") continue;
-    const done = g.tasks.length > 0 && g.tasks.every((t) => t.completedAt !== null);
+    const done =
+      g.targetDays != null
+        ? habitCheckDays(g.tasks).size >= g.targetDays
+        : g.tasks.length > 0 && g.tasks.every((t) => t.completedAt !== null);
     goalUpdates.push({ id: g.id, status: done ? "COMPLETED" : "FAILED" });
     if (!done && g.isCritical) failedCritical++;
   }

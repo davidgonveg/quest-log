@@ -190,6 +190,38 @@ try {
   );
   await page.screenshot({ path: `${SHOT_DIR}/03-tienda-sin-saldo.png` });
 
+  // 7b. Hábito semanal (3 días/semana, recurrente por defecto) desde /goals
+  await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const hForm = page.locator("form", { has: page.getByRole("button", { name: "Crear hábito" }) });
+  await hForm.getByPlaceholder("Ej. Leer 20 min").fill("Leer un rato");
+  await hForm.getByRole("button", { name: "Crear hábito" }).click();
+  await page.getByText("0/3 días").first().waitFor({ timeout: 10000 });
+  const habitTpl = await page.getByText("Hábito · 3 días/semana · Media").count();
+  log(
+    habitTpl > 0 ? "✅" : "❌",
+    "Hábito creado: instancia '0/3 días' y plantilla 'Hábito · 3 días/semana' en Recurrentes",
+  );
+
+  // 7c. Marcar el check de hoy desde el dashboard → 1/3 y +25 XP (10→35).
+  // Se asserta XP y no monedas: el botín (aleatorio) solo toca monedas.
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Completar hoy Leer un rato/ }).click();
+  await page.getByText("1/3 días").first().waitFor({ timeout: 10000 });
+  await page.getByText("35 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
+  log("✅", "Check de hábito → progreso 1/3 días y +25 XP en el header");
+  await page.screenshot({ path: `${SHOT_DIR}/08-habito-marcado.png` });
+
+  // 🔍 7d. Desmarcar el check de hoy devuelve el asiento (XP 35→10)
+  await page.getByRole("button", { name: /Desmarcar hoy Leer un rato/ }).click();
+  await page.getByText("10 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
+  const zeroDays = await page.getByText("0/3 días").count();
+  log(zeroDays > 0 ? "🔍" : "❌", "Desmarcar el check devuelve la XP y el progreso vuelve a 0/3");
+
+  // 7e. Re-marcar: quedará 1/3 al cierre (hábito fallido, no crítico)
+  await page.getByRole("button", { name: /Completar hoy Leer un rato/ }).click();
+  await page.getByText("35 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
+
   // 8. Cierre manual de semana → el crítico (1/2 tareas) falla → penalización
   await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Cerrar la semana ahora" }).click();
@@ -217,6 +249,14 @@ try {
   await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
   const failed = await page.getByText("✕ Fallido").count();
   log(failed > 0 ? "🔍" : "❌", "El objetivo crítico figura como '✕ Fallido' tras el cierre");
+
+  // 🔍 10b. El hábito con 1/3 días también cerró como fallido (sin penalización:
+  // no era crítico). Su tarjeta conserva el progreso.
+  const habitAfterClose = await page.getByText("1/3 días").count();
+  log(
+    habitAfterClose > 0 && failed >= 2 ? "🔍" : "❌",
+    "El hábito quedó '1/3 días · ✕ Fallido' tras el cierre",
+  );
 
   // 11. "Conseguido" retira el objetivo LP a la vitrina con su nivel final
   await page.getByRole("button", { name: "Conseguido" }).click();

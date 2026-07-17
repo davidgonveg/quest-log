@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ensureCurrentWeek, getStreakInfo } from "@/lib/week";
-import { DAY_NAMES } from "@/lib/week-logic";
+import { DAY_NAMES, dayIndex } from "@/lib/week-logic";
 import type { Difficulty } from "@/lib/gamification";
+import { habitItemFrom } from "@/lib/habits";
 import { coinsWithStreak } from "@/lib/streak";
 import { createTask } from "@/actions/tasks";
 import { WeekTasks } from "@/components/tasks/WeekTasks";
+import { HabitList } from "@/components/tasks/HabitList";
 import type { TaskItemData } from "@/components/tasks/TaskRow";
 import { AddDisclosure, Label, PrimaryButton, Select, TextInput } from "@/components/ui/Form";
 import { GoalPickerWithRecurring } from "@/components/tasks/GoalPickerWithRecurring";
@@ -14,15 +16,32 @@ export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
   const week = await ensureCurrentWeek();
-  const [tasks, weeklyGoals, streak] = await Promise.all([
+  const [tasks, weeklyGoals, habitGoals, streak] = await Promise.all([
+    // Sin las tasks-check de hábitos: se ven en su fila de hábito, no sueltas.
     prisma.task.findMany({
-      where: { weekId: week.id },
+      where: {
+        weekId: week.id,
+        OR: [{ weeklyGoalId: null }, { weeklyGoal: { targetDays: null } }],
+      },
       include: { weeklyGoal: { select: { title: true } } },
       orderBy: { title: "asc" },
     }),
-    prisma.weeklyGoal.findMany({ where: { weekId: week.id }, orderBy: { title: "asc" } }),
+    // A los hábitos no se les cuelgan tareas manuales: fuera del selector.
+    prisma.weeklyGoal.findMany({
+      where: { weekId: week.id, targetDays: null },
+      orderBy: { title: "asc" },
+    }),
+    prisma.weeklyGoal.findMany({
+      where: { weekId: week.id, targetDays: { not: null } },
+      include: { tasks: { select: { id: true, completedAt: true } } },
+      orderBy: { title: "asc" },
+    }),
     getStreakInfo(),
   ]);
+  const now = new Date();
+  const habits = habitGoals.map((g) =>
+    habitItemFrom({ ...g, targetDays: g.targetDays as number }, streak.ifCompletedNow, now),
+  );
 
   const items: TaskItemData[] = tasks.map((t) => ({
     id: t.id,
@@ -42,6 +61,8 @@ export default async function TasksPage() {
         ← Inicio
       </Link>
       <h1 className="font-display text-2xl font-bold">Semana completa</h1>
+
+      <HabitList habits={habits} today={dayIndex(now)} />
 
       <WeekTasks tasks={items} />
 

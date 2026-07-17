@@ -38,6 +38,9 @@ export function CelebrationProvider({ children }: { children: React.ReactNode })
         tone: "perfect",
       });
     }
+    if (result.habitCompleted) {
+      fresh.push({ id: Date.now() + 2, text: "¡Hábito de la semana cumplido! 💪", tone: "perfect" });
+    }
     if (fresh.length > 0) {
       setToasts((prev) => [...prev, ...fresh]);
       for (const t of fresh) {

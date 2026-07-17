@@ -52,6 +52,8 @@ model WeeklyGoal {
   title             String
   isCritical        Boolean        @default(false)
   status            String         @default("ACTIVE")
+  targetDays        Int? // hábito: meta de días/semana (1-7); null = objetivo normal
+  habitDifficulty   String? // EASY | MEDIUM | HARD del check diario del hábito
   sourceRecurringId String? // plantilla origen: idempotencia al instanciar
   sourceRecurring   RecurringGoal? @relation(fields: [sourceRecurringId], references: [id], onDelete: SetNull)
   tasks             Task[]
@@ -115,15 +117,17 @@ model Setting {
 // pendiente: cada semana nueva se instancia como WeeklyGoal normal.
 // active=false = en pausa (no se instancia, las instancias pasadas quedan).
 model RecurringGoal {
-  id             String          @id @default(cuid())
-  title          String
-  isCritical     Boolean         @default(false)
-  longTermGoalId String?
-  longTermGoal   LongTermGoal?   @relation(fields: [longTermGoalId], references: [id], onDelete: SetNull)
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  tasks          RecurringTask[]
-  instances      WeeklyGoal[]
+  id              String          @id @default(cuid())
+  title           String
+  isCritical      Boolean         @default(false)
+  longTermGoalId  String?
+  longTermGoal    LongTermGoal?   @relation(fields: [longTermGoalId], references: [id], onDelete: SetNull)
+  targetDays      Int? // hábito: meta de días/semana (1-7); null = objetivo normal
+  habitDifficulty String? // EASY | MEDIUM | HARD del check diario del hábito
+  active          Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  tasks           RecurringTask[]
+  instances       WeeklyGoal[]
 }
 
 // Plantilla de tarea. recurringGoalId null = tarea suelta recurrente.

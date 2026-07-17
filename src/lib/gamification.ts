@@ -16,6 +16,11 @@ export function rewardsForDifficulty(difficulty: Difficulty) {
   return DIFFICULTY_REWARDS[difficulty];
 }
 
+// La BD guarda difficulty como String (SQLite sin enums): sanear al leer.
+export function sanitizeDifficulty(d: string | null | undefined): Difficulty {
+  return d != null && d in DIFFICULTY_REWARDS ? (d as Difficulty) : "MEDIUM";
+}
+
 // XP acumulada necesaria para alcanzar el nivel n (nivel 1 = 0 XP).
 export function xpToReachLevel(n: number): number {
   if (n <= 1) return 0;

@@ -100,3 +100,67 @@ describe("closeWeekPlan", () => {
     expect(plan.message).toBeNull();
   });
 });
+
+// Checks de hábito: tasks ya completadas en días distintos de la semana
+// (lunes 13 – domingo 19 de julio de 2026).
+const checksOnDays = (...days: number[]) =>
+  days.map((d) => ({ completedAt: new Date(2026, 6, 13 + d, 12, 0) }));
+
+describe("closeWeekPlan con hábitos (targetDays)", () => {
+  it("completa el hábito con checks en al menos targetDays días distintos", () => {
+    const plan = closeWeekPlan({
+      weeklyGoals: [goal({ targetDays: 3, tasks: checksOnDays(0, 2, 4) })],
+      user,
+      settings,
+    });
+    expect(plan.goalUpdates).toEqual([{ id: "g1", status: "COMPLETED" }]);
+  });
+
+  it("falla el hábito por debajo de la meta aunque todos sus checks estén completos", () => {
+    // Con la regla de tareas normales (todas hechas) esto sería COMPLETED.
+    const plan = closeWeekPlan({
+      weeklyGoals: [goal({ targetDays: 3, tasks: checksOnDays(0, 2) })],
+      user,
+      settings,
+    });
+    expect(plan.goalUpdates).toEqual([{ id: "g1", status: "FAILED" }]);
+  });
+
+  it("los días extra por encima de la meta también completan", () => {
+    const plan = closeWeekPlan({
+      weeklyGoals: [goal({ targetDays: 3, tasks: checksOnDays(0, 1, 2, 3, 4) })],
+      user,
+      settings,
+    });
+    expect(plan.goalUpdates).toEqual([{ id: "g1", status: "COMPLETED" }]);
+  });
+
+  it("un hábito sin checks falla", () => {
+    const plan = closeWeekPlan({
+      weeklyGoals: [goal({ targetDays: 2, tasks: [] })],
+      user,
+      settings,
+    });
+    expect(plan.goalUpdates).toEqual([{ id: "g1", status: "FAILED" }]);
+  });
+
+  it("un hábito crítico incumplido penaliza como cualquier crítico", () => {
+    const plan = closeWeekPlan({
+      weeklyGoals: [goal({ targetDays: 4, isCritical: true, tasks: checksOnDays(0) })],
+      user,
+      settings,
+    });
+    expect(plan.failedCritical).toBe(1);
+    expect(plan.xpDelta).toBe(-25);
+    expect(plan.coinDelta).toBe(-50);
+  });
+
+  it("targetDays null mantiene la regla de tareas normales", () => {
+    const plan = closeWeekPlan({
+      weeklyGoals: [goal({ targetDays: null, tasks: [{ completedAt: new Date() }] })],
+      user,
+      settings,
+    });
+    expect(plan.goalUpdates).toEqual([{ id: "g1", status: "COMPLETED" }]);
+  });
+});
