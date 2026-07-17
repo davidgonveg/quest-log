@@ -80,7 +80,7 @@ export default async function Dashboard() {
         goals={goals}
       />
 
-      <TodayTasks tasks={todayTasks} />
+      <TodayTasks tasks={todayTasks} today={today} />
     </div>
   );
 }

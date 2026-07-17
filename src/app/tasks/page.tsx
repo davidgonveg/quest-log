@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ensureCurrentWeek, getStreakInfo } from "@/lib/week";
 import { DAY_NAMES } from "@/lib/week-logic";
@@ -37,6 +38,9 @@ export default async function TasksPage() {
 
   return (
     <div className="space-y-4">
+      <Link href="/" className="inline-flex min-h-11 items-center text-sm text-violet">
+        ← Inicio
+      </Link>
       <h1 className="font-display text-2xl font-bold">Semana completa</h1>
 
       <WeekTasks tasks={items} />

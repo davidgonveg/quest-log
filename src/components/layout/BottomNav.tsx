@@ -18,8 +18,11 @@ export function BottomNav() {
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-edge bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-md">
         {TABS.map((tab) => {
+          // /tasks es una página satélite del dashboard: mantiene Inicio activo.
           const active =
-            tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+            tab.href === "/"
+              ? pathname === "/" || pathname.startsWith("/tasks")
+              : pathname.startsWith(tab.href);
           return (
             <Link
               key={tab.href}

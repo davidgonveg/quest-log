@@ -165,6 +165,21 @@ try {
     "El objetivo a largo plazo muestra Nv. 1 con 10/100 XP tras la tarea",
   );
 
+  // 6c. Quick-add desde el dashboard: solo título, vence hoy por defecto
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  await page.getByLabel("Tarea rápida para hoy").fill("Poner lavadora");
+  await page.getByRole("button", { name: "Añadir tarea rápida" }).click();
+  await page.getByText("Poner lavadora").first().waitFor({ timeout: 10000 });
+  log("✅", "Quick-add crea la tarea desde el dashboard (Poner lavadora)");
+
+  // 6d. La vista semanal tiene retorno explícito a Inicio
+  await page.goto(`${BASE}/tasks`, { waitUntil: "networkidle" });
+  const backLink = page.getByRole("link", { name: "← Inicio" });
+  const hasBack = (await backLink.count()) > 0;
+  await backLink.click();
+  await page.waitForURL(`${BASE}/`);
+  log(hasBack ? "✅" : "❌", "El enlace '← Inicio' de /tasks vuelve al dashboard");
+
   // 🔍 7. Tienda sin saldo: canjear debe estar deshabilitado
   await page.goto(`${BASE}/shop`, { waitUntil: "networkidle" });
   const redeemBtn = page.getByRole("button", { name: "Canjear" }).first();
