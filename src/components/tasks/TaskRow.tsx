@@ -16,6 +16,7 @@ export interface TaskItemData {
   coinReward: number;
   completed: boolean;
   goalTitle: string | null;
+  weeklyGoalId: string | null;
   dueDay: number | null;
   streakBonus: number; // monedas extra si se completa ahora; 0 sin racha
 }
@@ -24,10 +25,12 @@ export function TaskRow({
   task,
   onToggle,
   onDelete,
+  onEdit,
 }: {
   task: TaskItemData;
   onToggle: (id: string) => void;
   onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
 }) {
   // Cambia en cada compleción para relanzar las animaciones (partículas,
   // pop del check, flotante de recompensa y barrido de la fila).
@@ -107,6 +110,15 @@ export function TaskRow({
           {task.completed ? "Desmarcar" : "Completar"} {task.title}
         </span>
       </button>
+      {onEdit && (
+        <button
+          onClick={() => onEdit(task.id)}
+          aria-label={`Editar ${task.title}`}
+          className="flex h-11 w-8 shrink-0 items-center justify-center text-muted transition-colors hover:text-violet active:text-violet"
+        >
+          ✎
+        </button>
+      )}
       {onDelete && (
         <button
           onClick={() => onDelete(task.id)}

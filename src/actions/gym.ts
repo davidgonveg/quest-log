@@ -2,10 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { completeHabitCheck } from "@/lib/habit-check";
+import { ensureCurrentWeek } from "@/lib/week";
 import { dayIndex, getWeekBounds } from "@/lib/week-logic";
+import type { ToggleResult } from "@/actions/tasks";
 
-// Tracking puro: ninguna action de gym toca XP, monedas ni el ledger
-// (el hábito de entrenar ya recompensa el día de gym).
+// El registro en sí es tracking puro (sin XP, monedas ni ledger), con una
+// excepción deliberada: registrar una sesión marca el check de ese día en el
+// hábito de gym si aún no lo tenía — apuntar el entreno de ayer cuenta como
+// que ayer entrenaste.
 
 export async function createExercise(formData: FormData): Promise<void> {
   const name = String(formData.get("name") ?? "").trim();
@@ -28,23 +33,23 @@ export async function toggleExerciseArchived(id: string): Promise<void> {
   revalidatePath("/gym");
 }
 
-export async function logGymEntry(formData: FormData): Promise<void> {
+export async function logGymEntry(formData: FormData): Promise<ToggleResult | null> {
   const exerciseId = String(formData.get("exerciseId") ?? "");
-  if (!exerciseId) return;
+  if (!exerciseId) return null;
 
   // Solo días de la semana actual hasta hoy: no se registra el futuro.
   const now = new Date();
   const today = dayIndex(now);
   const day = parseInt(String(formData.get("day") ?? ""), 10);
-  if (!Number.isInteger(day) || day < 0 || day > today) return;
+  if (!Number.isInteger(day) || day < 0 || day > today) return null;
 
   const sets = parseInt(String(formData.get("sets") ?? ""), 10);
   const reps = parseInt(String(formData.get("reps") ?? ""), 10);
-  if (!Number.isInteger(sets) || sets < 1 || !Number.isInteger(reps) || reps < 1) return;
+  if (!Number.isInteger(sets) || sets < 1 || !Number.isInteger(reps) || reps < 1) return null;
 
   const weightRaw = String(formData.get("weightKg") ?? "").trim().replace(",", ".");
   const weightKg = weightRaw === "" ? null : parseFloat(weightRaw);
-  if (weightKg !== null && (!Number.isFinite(weightKg) || weightKg < 0)) return;
+  if (weightKg !== null && (!Number.isFinite(weightKg) || weightKg < 0)) return null;
 
   const { start } = getWeekBounds(now);
   const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + day);
@@ -59,7 +64,27 @@ export async function logGymEntry(formData: FormData): Promise<void> {
       note: String(formData.get("note") ?? "").trim() || null,
     },
   });
+
+  // Marcar el día en el hábito de gym (si existe, está activo y ese día aún
+  // no tiene check). Para hoy se usa la hora real; para días pasados, mediodía.
+  const week = await ensureCurrentWeek();
+  const habit = await prisma.weeklyGoal.findFirst({
+    where: { weekId: week.id, targetDays: { not: null }, isGym: true, status: "ACTIVE" },
+  });
+  let result: ToggleResult | null = null;
+  if (habit) {
+    const when =
+      day === today
+        ? now
+        : new Date(start.getFullYear(), start.getMonth(), start.getDate() + day, 12);
+    result = await completeHabitCheck(habit.id, when);
+  }
+
   revalidatePath("/gym");
+  revalidatePath("/");
+  revalidatePath("/tasks");
+  revalidatePath("/goals");
+  return result;
 }
 
 // "Editar" en v1 = borrar y volver a registrar: una fila es barata de reescribir.

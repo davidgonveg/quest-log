@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { logGymEntry } from "@/actions/gym";
 import { repsLowerBound } from "@/lib/gym";
 import { DAY_NAMES } from "@/lib/week-logic";
+import { useCelebrate } from "@/components/celebration/CelebrationProvider";
 import { Label, PrimaryButton, Select, TextInput } from "@/components/ui/Form";
 
 export interface ExerciseOption {
@@ -20,6 +21,7 @@ export interface ExerciseOption {
 // Registro rápido: elegir el ejercicio precarga series/reps/peso con la
 // última sesión (o con el objetivo de la rutina si aún no hay ninguna).
 export function GymLogForm({ exercises, today }: { exercises: ExerciseOption[]; today: number }) {
+  const celebrate = useCelebrate();
   const formRef = useRef<HTMLFormElement>(null);
   const [selected, setSelected] = useState<ExerciseOption | null>(null);
   const [sets, setSets] = useState("");
@@ -45,7 +47,10 @@ export function GymLogForm({ exercises, today }: { exercises: ExerciseOption[]; 
     <form
       ref={formRef}
       action={async (formData) => {
-        await logGymEntry(formData);
+        // Registrar puede marcar el check del día en el hábito de gym: si da
+        // recompensa (botín, subida de nivel, meta cumplida), la celebramos.
+        const result = await logGymEntry(formData);
+        if (result) celebrate(result);
         formRef.current?.reset();
         setSelected(null);
         setSets("");
@@ -88,6 +93,9 @@ export function GymLogForm({ exercises, today }: { exercises: ExerciseOption[]; 
           </Select>
         </Label>
       </div>
+      <p className="text-xs text-muted">
+        Registrar cuenta ese día como entrenado en tu hábito de gym.
+      </p>
       {selected && (selected.last || selected.targetSets != null) && (
         <p className="text-xs text-muted">
           {selected.last &&

@@ -1,16 +1,18 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useState, useOptimistic, useTransition } from "react";
 import { deleteTask, toggleTask } from "@/actions/tasks";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { useCelebrate } from "@/components/celebration/CelebrationProvider";
 import { DAY_NAMES } from "@/lib/week-logic";
+import { EditTaskDialog, type GoalOption } from "./EditTaskDialog";
 import { TaskRow, type TaskItemData } from "./TaskRow";
 
-// Lista completa de la semana agrupada por día, con toggle y borrado.
-export function WeekTasks({ tasks }: { tasks: TaskItemData[] }) {
+// Lista completa de la semana agrupada por día, con toggle, edición y borrado.
+export function WeekTasks({ tasks, goals }: { tasks: TaskItemData[]; goals: GoalOption[] }) {
   const celebrate = useCelebrate();
   const [, startTransition] = useTransition();
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [optimistic, setOptimistic] = useOptimistic(
     tasks,
     (state, action: { type: "toggle" | "delete"; id: string }) =>
@@ -20,6 +22,8 @@ export function WeekTasks({ tasks }: { tasks: TaskItemData[] }) {
             t.id === action.id ? { ...t, completed: !t.completed } : t,
           ),
   );
+
+  const editing = optimistic.find((t) => t.id === editingId) ?? null;
 
   const groups: { label: string; items: TaskItemData[] }[] = [
     ...DAY_NAMES.map((label, day) => ({
@@ -55,6 +59,7 @@ export function WeekTasks({ tasks }: { tasks: TaskItemData[] }) {
                       celebrate(await toggleTask(id));
                     })
                   }
+                  onEdit={(id) => setEditingId(id)}
                   onDelete={(id) =>
                     startTransition(async () => {
                       setOptimistic({ type: "delete", id });
@@ -67,6 +72,9 @@ export function WeekTasks({ tasks }: { tasks: TaskItemData[] }) {
           </ul>
         </Card>
       ))}
+      {editing && (
+        <EditTaskDialog task={editing} goals={goals} onClose={() => setEditingId(null)} />
+      )}
     </div>
   );
 }

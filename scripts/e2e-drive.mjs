@@ -313,6 +313,86 @@ try {
   await page.getByText("Sin sesiones esta semana.").waitFor({ timeout: 10000 });
   log("✅", "Borrar la entrada de gym la quita de 'Esta semana'");
 
+  // 7i. Hábito de gym: registrar una sesión marca ese día como entrenado.
+  await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const gymHabitForm = page.locator("form", { has: page.getByRole("button", { name: "Crear hábito" }) });
+  await gymHabitForm.getByPlaceholder("Ej. Leer 20 min").fill("Ir al gimnasio");
+  await gymHabitForm.locator("select[name=targetDays]").selectOption("4");
+  await gymHabitForm.locator("input[name=isGym]").check();
+  await gymHabitForm.getByRole("button", { name: "Crear hábito" }).click();
+  await page.getByText("0/4 días").first().waitFor({ timeout: 10000 });
+  log("✅", "Hábito de gym 'Ir al gimnasio' (4 días/semana) creado");
+
+  await page.goto(`${BASE}/gym`, { waitUntil: "networkidle" });
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const logForm3 = page.locator("form", { has: page.getByRole("button", { name: "Registrar sesión" }) });
+  await logForm3.locator("select[name=exerciseId]").selectOption({ label: "Press banca" });
+  await page
+    .waitForFunction(() => document.querySelector("input[name=sets]")?.value === "4", null, { timeout: 5000 })
+    .catch(() => {});
+  await logForm3.locator("input[name=weightKg]").fill("62.5");
+  await logForm3.getByRole("button", { name: "Registrar sesión" }).click();
+  await page.getByText(/62[.,]5 kg/).first().waitFor({ timeout: 10000 });
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  const gymMarkedToday = await page.getByText("1/4 días").count();
+  log(gymMarkedToday > 0 ? "✅" : "❌", "Registrar sesión de HOY marca el día en el hábito de gym (1/4)");
+
+  // 🔍 7j. Check RETROACTIVO: registrar una sesión de un día pasado lo marca
+  // como entrenado (solo si hoy no es lunes; si lo es, no hay día anterior).
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  if (todayIdx > 0) {
+    await page.goto(`${BASE}/gym`, { waitUntil: "networkidle" });
+    await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+    const logForm4 = page.locator("form", { has: page.getByRole("button", { name: "Registrar sesión" }) });
+    await logForm4.locator("select[name=exerciseId]").selectOption({ label: "Press banca" });
+    await page
+      .waitForFunction(() => document.querySelector("input[name=sets]")?.value === "4", null, { timeout: 5000 })
+      .catch(() => {});
+    await logForm4.locator("select[name=day]").selectOption("0"); // lunes
+    await logForm4.locator("input[name=weightKg]").fill("60");
+    await logForm4.getByRole("button", { name: "Registrar sesión" }).click();
+    await page.waitForTimeout(1500);
+    await page.goto(BASE, { waitUntil: "networkidle" });
+    const gymRetro = await page.getByText("2/4 días").count();
+    log(gymRetro > 0 ? "🔍" : "❌", "Registrar sesión de un día PASADO lo cuenta como entrenado (2/4)");
+  } else {
+    log("🔍", "Hoy es lunes: sin día pasado que probar para el check retroactivo (omitido)");
+  }
+
+  // 7k. Quick-add con objetivo semanal desde el dashboard
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  await page.getByLabel("Tarea rápida para hoy").fill("Tarea con objetivo");
+  await page.getByRole("button", { name: "+ Asignar a un objetivo" }).click();
+  await page.getByLabel("Objetivo semanal").selectOption({ label: "Entrenar 2 veces" });
+  await page.getByRole("button", { name: "Añadir tarea rápida" }).click();
+  await page.getByText("Tarea con objetivo").first().waitFor({ timeout: 10000 });
+
+  // 7l. Editar esa tarea: el diálogo debe traer el objetivo preseleccionado
+  // (prueba el vínculo del quick-add) y permite renombrarla.
+  await page.getByRole("button", { name: "Editar Tarea con objetivo" }).click();
+  await page.getByRole("heading", { name: "Editar tarea" }).waitFor({ timeout: 10000 });
+  const editForm = page.locator("form", { has: page.getByRole("button", { name: "Guardar cambios" }) });
+  const editGoal = await editForm
+    .locator("select[name=weeklyGoalId]")
+    .locator("option:checked")
+    .innerText();
+  log(
+    editGoal.includes("Entrenar 2 veces") ? "✅" : "❌",
+    `Quick-add asignó la tarea al objetivo elegido (diálogo muestra "${editGoal}")`,
+  );
+  await editForm.locator("input[name=title]").fill("Tarea renombrada");
+  await editForm.getByRole("button", { name: "Guardar cambios" }).click();
+  await page.getByText("Tarea renombrada").first().waitFor({ timeout: 10000 });
+  log("✅", "Editar una tarea desde el dashboard renombra la tarea");
+
+  // 7m. Cambiar los días/semana de un hábito en 'Recurrentes' (para el futuro)
+  await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  await page.getByLabel("Días por semana del hábito").first().selectOption("5");
+  await page.getByText("1/5 días").first().waitFor({ timeout: 10000 });
+  log("✅", "Editar los días/semana del hábito actualiza su meta (3 → 5 días)");
+
   // 8. Cierre manual de semana → el crítico (1/2 tareas) falla → penalización
   await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Cerrar la semana ahora" }).click();
@@ -341,12 +421,13 @@ try {
   const failed = await page.getByText("✕ Fallido").count();
   log(failed > 0 ? "🔍" : "❌", "El objetivo crítico figura como '✕ Fallido' tras el cierre");
 
-  // 🔍 10b. El hábito con 1/3 días también cerró como fallido (sin penalización:
-  // no era crítico). Su tarjeta conserva el progreso.
-  const habitAfterClose = await page.getByText("1/3 días").count();
+  // 🔍 10b. El hábito conserva su progreso y cerró como fallido (sin
+  // penalización: no era crítico). Su meta ya es 5 (editada en 7m), así que
+  // el check de hoy se ve como "1/5 días".
+  const habitAfterClose = await page.getByText("1/5 días").count();
   log(
     habitAfterClose > 0 && failed >= 2 ? "🔍" : "❌",
-    "El hábito quedó '1/3 días · ✕ Fallido' tras el cierre",
+    "El hábito quedó '1/5 días · ✕ Fallido' tras el cierre",
   );
 
   // 11. "Conseguido" retira el objetivo LP a la vitrina con su nivel final

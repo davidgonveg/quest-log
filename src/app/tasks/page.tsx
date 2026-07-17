@@ -51,9 +51,12 @@ export default async function TasksPage() {
     coinReward: t.coinReward,
     completed: t.completedAt !== null,
     goalTitle: t.weeklyGoal?.title ?? null,
+    weeklyGoalId: t.weeklyGoalId,
     dueDay: t.dueDay,
     streakBonus: coinsWithStreak(t.coinReward, streak.ifCompletedNow) - t.coinReward,
   }));
+
+  const assignableGoals = weeklyGoals.map((g) => ({ id: g.id, title: g.title }));
 
   return (
     <div className="space-y-4">
@@ -64,7 +67,7 @@ export default async function TasksPage() {
 
       <HabitList habits={habits} today={dayIndex(now)} />
 
-      <WeekTasks tasks={items} />
+      <WeekTasks tasks={items} goals={assignableGoals} />
 
       <AddDisclosure label="Añadir tarea">
         <form action={createTask} className="space-y-3">

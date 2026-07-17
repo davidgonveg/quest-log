@@ -7,6 +7,7 @@ import {
 import { DIFFICULTY_LABELS, type Difficulty } from "@/lib/gamification";
 import { DAY_NAMES } from "@/lib/week-logic";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import { HabitDaysEditor } from "./HabitDaysEditor";
 
 interface TplTask {
   id: string;
@@ -114,6 +115,11 @@ export function RecurringSection({ goals, tasks }: { goals: TplGoal[]; tasks: Tp
               <DeleteButton action={deleteRecurringGoal.bind(null, g.id)} title={g.title} />
             </div>
           </div>
+          {g.targetDays !== null && (
+            <div className="mt-2 border-t border-edge pt-2">
+              <HabitDaysEditor id={g.id} targetDays={g.targetDays} />
+            </div>
+          )}
           {g.tasks.length > 0 && (
             <ul className="mt-2 space-y-1 border-t border-edge pt-2">
               {g.tasks.map((t) => (
