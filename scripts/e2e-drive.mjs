@@ -136,15 +136,19 @@ try {
   );
   await page.getByRole("button", { name: /Completar Salir a correr/ }).click();
   await page.getByText("10 / 100 XP").waitFor({ timeout: 10000 });
-  // Los contadores del header animan (count-up 0→N); espera al valor final
-  // antes de contarlo, o la aserción corre contra un número a medio animar.
-  const coinChip = page.locator("header").getByText("6", { exact: true });
-  await coinChip.first().waitFor({ timeout: 10000 }).catch(() => {});
-  const coins = await coinChip.count();
+  // Los contadores del header animan (count-up 0→N) y el botín (aleatorio,
+  // ~15 %) puede sumar 5-30 🪙 extra: se espera a que el contador llegue al
+  // menos a las 6 base (5 × 1.1) en vez de exigir un valor exacto.
+  let coinsNow = -1;
+  for (let i = 0; i < 20 && coinsNow < 6; i++) {
+    await page.waitForTimeout(500);
+    const m = (await page.locator("header").innerText()).match(/🪙\s*(\d+)/);
+    if (m) coinsNow = parseInt(m[1], 10);
+  }
   const flame = await page.getByLabel("Racha de 1 día").count();
   log(
-    coins > 0 && flame > 0 ? "✅" : "❌",
-    "Completar tarea → 10/100 XP, monedas ×1.1 (6) y 🔥 1 en el header",
+    coinsNow >= 6 && flame > 0 ? "✅" : "❌",
+    `Completar tarea → 10/100 XP, monedas ×1.1 (${coinsNow} 🪙, ≥6) y 🔥 1 en el header`,
   );
   await page.screenshot({ path: `${SHOT_DIR}/02-dash-tarea-completada.png` });
 
@@ -190,13 +194,26 @@ try {
   await page.waitForURL(`${BASE}/`);
   log(hasBack ? "✅" : "❌", "El enlace '← Inicio' de /tasks vuelve al dashboard");
 
-  // 🔍 7. Tienda sin saldo: canjear debe estar deshabilitado
+  // 🔍 7. Tienda: canjear deshabilitado ⇔ saldo < 30. El saldo se lee del
+  // header (el botín aleatorio puede haberlo subido por encima del coste);
+  // se espera a que el count-up del contador se estabilice antes de leer.
+  let headerCoins = -1;
+  for (let i = 0; i < 10; i++) {
+    await page.waitForTimeout(700);
+    const v = parseInt(
+      (await page.locator("header").innerText()).match(/🪙\s*(\d+)/)?.[1] ?? "-1",
+      10,
+    );
+    if (v === headerCoins && v >= 0) break;
+    headerCoins = v;
+  }
   await page.goto(`${BASE}/shop`, { waitUntil: "networkidle" });
   const redeemBtn = page.getByRole("button", { name: "Canjear" }).first();
   const disabled = await redeemBtn.isDisabled();
+  const redeemOk = disabled === headerCoins < 30;
   log(
-    disabled ? "🔍" : "❌",
-    `Con 6 monedas, el premio de 30 tiene 'Canjear' ${disabled ? "deshabilitado" : "ACTIVO (mal)"}`,
+    redeemOk ? "🔍" : "❌",
+    `Con ${headerCoins} 🪙, el premio de 30 tiene 'Canjear' ${disabled ? "deshabilitado" : "activo"} (${redeemOk ? "correcto" : "MAL"})`,
   );
   await page.screenshot({ path: `${SHOT_DIR}/03-tienda-sin-saldo.png` });
 
@@ -269,6 +286,21 @@ try {
     "Sesión de gym registrada: visible en 'Esta semana' y en 'Progresión'",
   );
   await page.screenshot({ path: `${SHOT_DIR}/09-gym-sesion.png` });
+
+  // 🔍 7f-bis. Re-elegir el ejercicio precarga la ÚLTIMA sesión (manda sobre
+  // el objetivo de la rutina): el 60 kg registrado sale solo la próxima vez.
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  await logForm.locator("select[name=exerciseId]").selectOption({ label: "Press banca" });
+  await page
+    .waitForFunction(() => document.querySelector("input[name=weightKg]")?.value === "60", null, {
+      timeout: 5000,
+    })
+    .catch(() => {});
+  const lastWeight = await logForm.locator("input[name=weightKg]").inputValue();
+  log(
+    lastWeight === "60" ? "🔍" : "❌",
+    `Re-elegir el ejercicio precarga la última sesión (peso ${lastWeight} kg)`,
+  );
 
   // 🔍 7g. El registro de gym no toca XP/monedas (tracking puro)
   await page.goto(BASE, { waitUntil: "networkidle" });

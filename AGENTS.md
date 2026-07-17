@@ -81,9 +81,11 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   `GymEntry` (una fila por ejercicio y sesión: series×reps×peso; peso null =
   corporal; solo días de la semana actual hasta hoy). **Tracking puro**: sin
   XP, monedas ni ledger — el hábito marcado `isGym` ya recompensa el día y su
-  fila enlaza «Registrar sesión →» al marcar el check. Progresión por ejercicio
-  derivada en lectura (`gym.ts`, puro: mejor peso y volumen por sesión;
-  sparkline SVG propio sin animación).
+  fila enlaza «Registrar sesión →» al marcar el check. Elegir ejercicio en el
+  registro **precarga la última sesión** (`latestEntry`, puro) o, si no hay,
+  el objetivo de la rutina (`targetSets`/`targetReps`, `repsLowerBound`).
+  Progresión por ejercicio derivada en lectura (`gym.ts`, puro: mejor peso y
+  volumen por sesión; sparkline SVG propio sin animación).
 - **Resumen semanal "Wrapped"** 📊: al cerrarse una semana, el dashboard muestra
   un resumen (`WeekSummary`) hasta descartarlo (`summarySeen`): XP/monedas
   ganadas, tareas hechas, mejor día, objetivos logrados/fallados y, si la semana

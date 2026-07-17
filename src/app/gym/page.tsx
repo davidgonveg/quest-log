@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ensureCurrentWeek } from "@/lib/week";
-import { groupEntriesByDay, progressionFor } from "@/lib/gym";
+import { groupEntriesByDay, latestEntry, progressionFor } from "@/lib/gym";
 import { dayIndex } from "@/lib/week-logic";
 import { createExercise, toggleExerciseArchived } from "@/actions/gym";
 import { GymWeek } from "@/components/gym/GymWeek";
@@ -50,13 +50,17 @@ export default async function GymPage() {
           </p>
         ) : (
           <GymLogForm
-            exercises={available.map((e) => ({
-              id: e.id,
-              name: e.name,
-              muscleGroup: e.muscleGroup,
-              targetSets: e.targetSets,
-              targetReps: e.targetReps,
-            }))}
+            exercises={available.map((e) => {
+              const last = latestEntry(allEntries.filter((en) => en.exerciseId === e.id));
+              return {
+                id: e.id,
+                name: e.name,
+                muscleGroup: e.muscleGroup,
+                targetSets: e.targetSets,
+                targetReps: e.targetReps,
+                last: last && { sets: last.sets, reps: last.reps, weightKg: last.weightKg },
+              };
+            })}
             today={today}
           />
         )}
