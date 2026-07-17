@@ -7,9 +7,22 @@ description: Cómo verificar Quest Log end-to-end - levantar el contenedor y rec
 
 ## Levantar
 
+> ⚠️ **Si el contenedor de producción está corriendo, páralo antes**
+> (`docker compose stop`, reversible): ocupa el puerto 3000 y `next dev`
+> saltaría en silencio a otro puerto, con lo que el e2e (hardcodeado a :3000)
+> escribiría datos de prueba en la BD REAL. El script tiene una guarda que
+> aborta si la BD no está virgen, pero no dependas solo de ella.
+
 ```bash
-docker compose down -v && docker compose up -d --build   # BD limpia
-# o en dev: npm run dev  (BD en prisma/dev.db, seed con npm run db:seed)
+# Opción sin tocar datos reales (preferida en la máquina del usuario):
+docker compose stop
+Remove-Item prisma/e2e.db -Force; $env:DATABASE_URL = "file:./e2e.db"
+npx prisma migrate deploy
+$env:DATABASE_URL = "file:./e2e.db"; npm run dev   # confirma que dice :3000
+# Al terminar: matar el dev server y docker compose start
+
+# Opción contenedor limpio (destruye el volumen quest-data — solo con backup):
+docker compose down -v && docker compose up -d --build
 ```
 
 App en http://localhost:3000. El primer arranque auto-crea usuario "Aventurero" y premios de ejemplo.

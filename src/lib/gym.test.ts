@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupEntriesByDay, progressionFor, sparklinePoints } from "./gym";
+import { groupEntriesByDay, progressionFor, repsLowerBound, sparklinePoints } from "./gym";
 
 // Semana del lunes 13 al domingo 19 de julio de 2026.
 const weekStart = new Date(2026, 6, 13, 0, 0, 0, 0);
@@ -68,5 +68,18 @@ describe("sparklinePoints", () => {
 
   it("sin valores devuelve cadena vacía", () => {
     expect(sparklinePoints([], 100, 30)).toBe("");
+  });
+});
+
+describe("repsLowerBound", () => {
+  it("toma el primer número del objetivo de reps", () => {
+    expect(repsLowerBound("6-8")).toBe(6);
+    expect(repsLowerBound("20-30 seg")).toBe(20);
+    expect(repsLowerBound("12")).toBe(12);
+  });
+
+  it("null o texto sin número devuelven null", () => {
+    expect(repsLowerBound(null)).toBeNull();
+    expect(repsLowerBound("al fallo")).toBeNull();
   });
 });

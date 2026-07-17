@@ -10,8 +10,14 @@ import { dayIndex, getWeekBounds } from "@/lib/week-logic";
 export async function createExercise(formData: FormData): Promise<void> {
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
+  const targetSetsRaw = parseInt(String(formData.get("targetSets") ?? ""), 10);
   await prisma.exercise.create({
-    data: { name, muscleGroup: String(formData.get("muscleGroup") ?? "").trim() || null },
+    data: {
+      name,
+      muscleGroup: String(formData.get("muscleGroup") ?? "").trim() || null,
+      targetSets: Number.isInteger(targetSetsRaw) && targetSetsRaw > 0 ? targetSetsRaw : null,
+      targetReps: String(formData.get("targetReps") ?? "").trim() || null,
+    },
   });
   revalidatePath("/gym");
 }
