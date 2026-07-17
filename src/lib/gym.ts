@@ -54,6 +54,17 @@ export function progressionFor(entries: GymEntryRow[]): ProgressionRow[] {
     });
 }
 
+// Última entrada registrada de un ejercicio: el peso/reps con el que se
+// precarga el próximo registro. Gana el día de sesión más reciente y, a
+// igual día, la registrada más tarde.
+export function latestEntry<T extends { date: Date; createdAt?: Date }>(entries: T[]): T | null {
+  return entries.reduce<T | null>((best, e) => {
+    if (!best) return e;
+    if (e.date.getTime() !== best.date.getTime()) return e.date > best.date ? e : best;
+    return (e.createdAt?.getTime() ?? 0) > (best.createdAt?.getTime() ?? 0) ? e : best;
+  }, null);
+}
+
 // Primer número del objetivo de reps ("6-8" → 6, "20-30 seg" → 20): valor
 // con el que se precarga el formulario de registro al elegir el ejercicio.
 export function repsLowerBound(targetReps: string | null | undefined): number | null {

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { groupEntriesByDay, progressionFor, repsLowerBound, sparklinePoints } from "./gym";
+import {
+  groupEntriesByDay,
+  latestEntry,
+  progressionFor,
+  repsLowerBound,
+  sparklinePoints,
+} from "./gym";
 
 // Semana del lunes 13 al domingo 19 de julio de 2026.
 const weekStart = new Date(2026, 6, 13, 0, 0, 0, 0);
@@ -68,6 +74,25 @@ describe("sparklinePoints", () => {
 
   it("sin valores devuelve cadena vacía", () => {
     expect(sparklinePoints([], 100, 30)).toBe("");
+  });
+});
+
+describe("latestEntry", () => {
+  it("devuelve la entrada del día de sesión más reciente", () => {
+    const older = entry(new Date(2026, 6, 8), { id: "e1", weightKg: 57.5 });
+    const newer = entry(new Date(2026, 6, 15), { id: "e2", weightKg: 60 });
+    expect(latestEntry([newer, older])).toBe(newer);
+    expect(latestEntry([older, newer])).toBe(newer);
+  });
+
+  it("a igual día, gana la registrada más tarde (createdAt)", () => {
+    const first = { ...entry(new Date(2026, 6, 15), { id: "e1" }), createdAt: new Date(2026, 6, 15, 10) };
+    const second = { ...entry(new Date(2026, 6, 15), { id: "e2" }), createdAt: new Date(2026, 6, 15, 11) };
+    expect(latestEntry([second, first])).toBe(second);
+  });
+
+  it("sin entradas devuelve null", () => {
+    expect(latestEntry([])).toBeNull();
   });
 });
 

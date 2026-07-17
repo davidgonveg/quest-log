@@ -12,15 +12,19 @@ export interface ExerciseOption {
   muscleGroup: string | null;
   targetSets: number | null;
   targetReps: string | null;
+  // Última sesión registrada del ejercicio: manda sobre el objetivo al
+  // precargar (si subiste el peso, la próxima vez ya sale el nuevo).
+  last: { sets: number; reps: number; weightKg: number | null } | null;
 }
 
-// Registro rápido: elegir el ejercicio precarga series y reps con el objetivo
-// de la rutina — solo queda poner el peso y guardar.
+// Registro rápido: elegir el ejercicio precarga series/reps/peso con la
+// última sesión (o con el objetivo de la rutina si aún no hay ninguna).
 export function GymLogForm({ exercises, today }: { exercises: ExerciseOption[]; today: number }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [selected, setSelected] = useState<ExerciseOption | null>(null);
   const [sets, setSets] = useState("");
   const [reps, setReps] = useState("");
+  const [weight, setWeight] = useState("");
 
   // Selector agrupado por bloque de rutina, en el orden del catálogo.
   const groups = new Map<string, ExerciseOption[]>();
@@ -32,8 +36,9 @@ export function GymLogForm({ exercises, today }: { exercises: ExerciseOption[]; 
   const pick = (id: string) => {
     const ex = exercises.find((e) => e.id === id) ?? null;
     setSelected(ex);
-    setSets(ex?.targetSets?.toString() ?? "");
-    setReps(repsLowerBound(ex?.targetReps)?.toString() ?? "");
+    setSets((ex?.last?.sets ?? ex?.targetSets)?.toString() ?? "");
+    setReps((ex?.last?.reps ?? repsLowerBound(ex?.targetReps))?.toString() ?? "");
+    setWeight(ex?.last?.weightKg?.toString() ?? "");
   };
 
   return (
@@ -45,6 +50,7 @@ export function GymLogForm({ exercises, today }: { exercises: ExerciseOption[]; 
         setSelected(null);
         setSets("");
         setReps("");
+        setWeight("");
       }}
       className="space-y-3"
     >
@@ -82,9 +88,15 @@ export function GymLogForm({ exercises, today }: { exercises: ExerciseOption[]; 
           </Select>
         </Label>
       </div>
-      {selected?.targetSets != null && (
+      {selected && (selected.last || selected.targetSets != null) && (
         <p className="text-xs text-muted">
-          Objetivo: {selected.targetSets}×{selected.targetReps ?? "—"}
+          {selected.last &&
+            `Última vez: ${selected.last.sets}×${selected.last.reps}${
+              selected.last.weightKg != null ? ` · ${selected.last.weightKg} kg` : ""
+            }`}
+          {selected.last && selected.targetSets != null && " · "}
+          {selected.targetSets != null &&
+            `Objetivo: ${selected.targetSets}×${selected.targetReps ?? "—"}`}
         </p>
       )}
       <div className="grid grid-cols-3 gap-3">
@@ -114,7 +126,13 @@ export function GymLogForm({ exercises, today }: { exercises: ExerciseOption[]; 
         </Label>
         <Label>
           Peso (kg)
-          <TextInput name="weightKg" inputMode="decimal" placeholder="60" />
+          <TextInput
+            name="weightKg"
+            inputMode="decimal"
+            placeholder="60"
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+          />
         </Label>
       </div>
       <Label>
