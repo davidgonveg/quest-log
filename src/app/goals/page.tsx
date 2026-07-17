@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ensureCurrentWeek } from "@/lib/week";
 import { goalXpFrom, levelForXp, levelProgress } from "@/lib/gamification";
@@ -286,9 +287,20 @@ export default async function GoalsPage() {
               />
               🔁 Repetir cada semana
             </label>
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input type="checkbox" name="isGym" className="h-5 w-5 accent-[var(--violet)]" />
+              🏋️ Es entrenamiento (enlaza con el gimnasio)
+            </label>
             <PrimaryButton type="submit">Crear hábito</PrimaryButton>
           </form>
         </AddDisclosure>
+        <Link
+          href="/gym"
+          className="hud-chamfer-sm flex min-h-12 items-center justify-between border border-edge bg-surface px-4 text-sm font-medium"
+        >
+          <span>🏋️ Gimnasio — sesiones y progresión</span>
+          <span className="text-violet">→</span>
+        </Link>
       </section>
 
       <RecurringSection goals={recurringGoals} tasks={recurringTasks} />

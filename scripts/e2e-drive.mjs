@@ -222,6 +222,42 @@ try {
   await page.getByRole("button", { name: /Completar hoy Leer un rato/ }).click();
   await page.getByText("35 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
 
+  // 7f. Módulo de gym: llegar desde /goals, crear ejercicio y registrar sesión
+  await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+  await page.getByRole("link", { name: /Gimnasio/ }).click();
+  await page.waitForURL(`${BASE}/gym`);
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const exForm = page.locator("form", { has: page.getByRole("button", { name: "Crear ejercicio" }) });
+  await exForm.getByPlaceholder("Ej. Press banca").fill("Press banca");
+  await exForm.getByRole("button", { name: "Crear ejercicio" }).click();
+  await page.getByRole("button", { name: "Archivar" }).first().waitFor({ timeout: 10000 });
+
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const logForm = page.locator("form", { has: page.getByRole("button", { name: "Registrar sesión" }) });
+  await logForm.locator("select[name=exerciseId]").selectOption({ label: "Press banca" });
+  await logForm.locator("input[name=sets]").fill("4");
+  await logForm.locator("input[name=reps]").fill("8");
+  await logForm.locator("input[name=weightKg]").fill("60");
+  await logForm.getByRole("button", { name: "Registrar sesión" }).click();
+  await page.getByText("4×8 · 60 kg").first().waitFor({ timeout: 10000 });
+  const progCount = await page.getByText("1 sesión", { exact: true }).count();
+  log(
+    progCount > 0 ? "✅" : "❌",
+    "Sesión de gym registrada: visible en 'Esta semana' y en 'Progresión'",
+  );
+  await page.screenshot({ path: `${SHOT_DIR}/09-gym-sesion.png` });
+
+  // 🔍 7g. El registro de gym no toca XP/monedas (tracking puro)
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  const xpIntact = await page.getByText("35 / 100 XP", { exact: true }).count();
+  log(xpIntact > 0 ? "🔍" : "❌", "Registrar la sesión no cambió la XP del header (35/100)");
+
+  // 7h. Borrar la entrada la retira de la semana
+  await page.goto(`${BASE}/gym`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Eliminar Press banca 4×8/ }).click();
+  await page.getByText("Sin sesiones esta semana.").waitFor({ timeout: 10000 });
+  log("✅", "Borrar la entrada de gym la quita de 'Esta semana'");
+
   // 8. Cierre manual de semana → el crítico (1/2 tareas) falla → penalización
   await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Cerrar la semana ahora" }).click();

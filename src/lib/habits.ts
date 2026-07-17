@@ -52,6 +52,7 @@ export interface HabitGoalRow {
   title: string;
   targetDays: number;
   habitDifficulty: string | null;
+  isGym: boolean;
   tasks: { id: string; completedAt: Date | null }[];
 }
 
@@ -66,6 +67,7 @@ export interface HabitItemData {
   days: boolean[];
   checkedToday: boolean;
   streakBonus: number; // monedas extra del próximo check con la racha actual
+  isGym: boolean;
 }
 
 // Fila de hábito lista para la UI, derivada del objetivo y sus checks.
@@ -88,6 +90,7 @@ export function habitItemFrom(
     days: progress.days,
     checkedToday: todaysCheck(goal.tasks, now) !== null,
     streakBonus: coinsWithStreak(rewards.coins, streakIfCompletedNow) - rewards.coins,
+    isGym: goal.isGym,
   };
 }
 

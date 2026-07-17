@@ -18,6 +18,7 @@ export interface RecurringGoalTemplate {
   longTermGoalId: string | null;
   targetDays: number | null; // hábito: meta de días/semana; null = objetivo normal
   habitDifficulty: string | null; // dificultad del check diario del hábito
+  isGym: boolean; // hábito de entrenamiento: enlaza con el módulo de gym
   active: boolean;
   tasks: RecurringTaskTemplate[];
 }
@@ -38,6 +39,7 @@ export interface PlannedGoal {
   longTermGoalId: string | null;
   targetDays: number | null;
   habitDifficulty: Difficulty | null;
+  isGym: boolean;
   tasks: PlannedTask[];
 }
 
@@ -80,6 +82,7 @@ export function planRecurrence(input: {
       targetDays: g.targetDays,
       habitDifficulty:
         g.habitDifficulty === null ? null : sanitizeDifficulty(g.habitDifficulty),
+      isGym: g.isGym,
       tasks: g.tasks.filter((t) => t.active).map(toPlannedTask),
     }));
 

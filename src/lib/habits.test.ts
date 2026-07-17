@@ -94,6 +94,7 @@ describe("habitItemFrom", () => {
     title: "Entrenar",
     targetDays: 4,
     habitDifficulty: "EASY",
+    isGym: true,
     tasks: [check(mon), check(fri, "t2")],
   };
 
@@ -111,6 +112,7 @@ describe("habitItemFrom", () => {
       days: [true, false, false, false, true, false, false],
       checkedToday: true,
       streakBonus: 1,
+      isGym: true,
     });
   });
 

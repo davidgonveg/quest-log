@@ -75,6 +75,15 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   check de HOY es marcable/desmarcable; desmarcar devuelve el asiento y borra
   la task. A los hábitos no se les cuelgan tareas manuales y sus checks nunca
   se listan como tareas sueltas. Lógica pura en `habits.ts` (testeada).
+- **Gimnasio** 🏋️ (página satélite `/gym`; como `/tasks`, sin tab propio: la
+  nav ilumina su tab madre vía `PARENT_TAB` en `BottomNav`): catálogo
+  `Exercise` (se archiva, nunca se borra: preserva historial) y registro
+  `GymEntry` (una fila por ejercicio y sesión: series×reps×peso; peso null =
+  corporal; solo días de la semana actual hasta hoy). **Tracking puro**: sin
+  XP, monedas ni ledger — el hábito marcado `isGym` ya recompensa el día y su
+  fila enlaza «Registrar sesión →» al marcar el check. Progresión por ejercicio
+  derivada en lectura (`gym.ts`, puro: mejor peso y volumen por sesión;
+  sparkline SVG propio sin animación).
 - **Resumen semanal "Wrapped"** 📊: al cerrarse una semana, el dashboard muestra
   un resumen (`WeekSummary`) hasta descartarlo (`summarySeen`): XP/monedas
   ganadas, tareas hechas, mejor día, objetivos logrados/fallados y, si la semana

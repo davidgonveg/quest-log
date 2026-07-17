@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { DIFFICULTY_LABELS } from "@/lib/gamification";
 import type { HabitItemData } from "@/lib/habits";
@@ -23,13 +24,14 @@ export function HabitRow({
   const met = habit.done >= habit.target;
 
   return (
-    <button
-      onClick={() => {
-        if (!habit.checkedToday) setBurst(Date.now());
-        onToggle(habit.id);
-      }}
-      className="flex min-h-14 w-full min-w-0 items-center gap-3 py-2 text-left transition-opacity active:opacity-60"
-    >
+    <div>
+      <button
+        onClick={() => {
+          if (!habit.checkedToday) setBurst(Date.now());
+          onToggle(habit.id);
+        }}
+        className="flex min-h-14 w-full min-w-0 items-center gap-3 py-2 text-left transition-opacity active:opacity-60"
+      >
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2 text-sm font-medium">
           <span className="truncate">{habit.title}</span>
@@ -84,9 +86,19 @@ export function HabitRow({
           </span>
         )}
       </span>
-      <span className="sr-only">
-        {habit.checkedToday ? "Desmarcar hoy" : "Completar hoy"} {habit.title}
-      </span>
-    </button>
+        <span className="sr-only">
+          {habit.checkedToday ? "Desmarcar hoy" : "Completar hoy"} {habit.title}
+        </span>
+      </button>
+      {/* El momento "acabo de entrenar" lleva directo al registro de la sesión. */}
+      {habit.isGym && habit.checkedToday && (
+        <Link
+          href="/gym"
+          className="-mt-1 mb-1 inline-flex min-h-11 items-center text-xs font-medium text-violet"
+        >
+          🏋️ Registrar sesión →
+        </Link>
+      )}
+    </div>
   );
 }

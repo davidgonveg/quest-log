@@ -11,6 +11,15 @@ const TABS = [
   { href: "/settings", label: "Ajustes", icon: "⚙️" },
 ] as const;
 
+// Páginas satélite sin tab propio: iluminan el tab de su página madre.
+const PARENT_TAB: Record<string, string> = { "/tasks": "/", "/gym": "/goals" };
+
+function isActive(href: string, pathname: string): boolean {
+  const parent = Object.entries(PARENT_TAB).find(([p]) => pathname.startsWith(p))?.[1];
+  if (parent) return parent === href;
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
+
 export function BottomNav() {
   const pathname = usePathname();
 
@@ -18,11 +27,7 @@ export function BottomNav() {
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-edge bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-md">
         {TABS.map((tab) => {
-          // /tasks es una página satélite del dashboard: mantiene Inicio activo.
-          const active =
-            tab.href === "/"
-              ? pathname === "/" || pathname.startsWith("/tasks")
-              : pathname.startsWith(tab.href);
+          const active = isActive(tab.href, pathname);
           return (
             <Link
               key={tab.href}

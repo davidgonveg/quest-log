@@ -24,9 +24,17 @@ export async function createHabitGoal(formData: FormData): Promise<void> {
   const habitDifficulty = sanitizeDifficulty(String(formData.get("habitDifficulty") ?? ""));
   const longTermGoalId = String(formData.get("longTermGoalId") ?? "") || null;
   const isCritical = formData.get("isCritical") === "on";
+  const isGym = formData.get("isGym") === "on";
 
   const week = await ensureCurrentWeek();
-  const data = { title, isCritical, longTermGoalId, targetDays: targetDaysRaw, habitDifficulty };
+  const data = {
+    title,
+    isCritical,
+    longTermGoalId,
+    targetDays: targetDaysRaw,
+    habitDifficulty,
+    isGym,
+  };
 
   if (formData.get("recurring") === "on") {
     // Plantilla + instancia juntas: si algo falla no queda plantilla huérfana.

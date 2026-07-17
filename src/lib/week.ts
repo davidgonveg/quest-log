@@ -135,6 +135,7 @@ export async function applyRecurrence(weekId: string): Promise<void> {
           longTermGoalId: g.longTermGoalId,
           targetDays: g.targetDays,
           habitDifficulty: g.habitDifficulty,
+          isGym: g.isGym,
           sourceRecurringId: g.sourceRecurringId,
           tasks: {
             create: g.tasks.map((t) => ({
