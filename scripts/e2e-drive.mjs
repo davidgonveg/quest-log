@@ -165,6 +165,21 @@ try {
     "El objetivo a largo plazo muestra Nv. 1 con 10/100 XP tras la tarea",
   );
 
+  // 6c. Quick-add desde el dashboard: solo título, vence hoy por defecto
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  await page.getByLabel("Tarea rápida para hoy").fill("Poner lavadora");
+  await page.getByRole("button", { name: "Añadir tarea rápida" }).click();
+  await page.getByText("Poner lavadora").first().waitFor({ timeout: 10000 });
+  log("✅", "Quick-add crea la tarea desde el dashboard (Poner lavadora)");
+
+  // 6d. La vista semanal tiene retorno explícito a Inicio
+  await page.goto(`${BASE}/tasks`, { waitUntil: "networkidle" });
+  const backLink = page.getByRole("link", { name: "← Inicio" });
+  const hasBack = (await backLink.count()) > 0;
+  await backLink.click();
+  await page.waitForURL(`${BASE}/`);
+  log(hasBack ? "✅" : "❌", "El enlace '← Inicio' de /tasks vuelve al dashboard");
+
   // 🔍 7. Tienda sin saldo: canjear debe estar deshabilitado
   await page.goto(`${BASE}/shop`, { waitUntil: "networkidle" });
   const redeemBtn = page.getByRole("button", { name: "Canjear" }).first();
@@ -174,6 +189,74 @@ try {
     `Con 6 monedas, el premio de 30 tiene 'Canjear' ${disabled ? "deshabilitado" : "ACTIVO (mal)"}`,
   );
   await page.screenshot({ path: `${SHOT_DIR}/03-tienda-sin-saldo.png` });
+
+  // 7b. Hábito semanal (3 días/semana, recurrente por defecto) desde /goals
+  await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const hForm = page.locator("form", { has: page.getByRole("button", { name: "Crear hábito" }) });
+  await hForm.getByPlaceholder("Ej. Leer 20 min").fill("Leer un rato");
+  await hForm.getByRole("button", { name: "Crear hábito" }).click();
+  await page.getByText("0/3 días").first().waitFor({ timeout: 10000 });
+  const habitTpl = await page.getByText("Hábito · 3 días/semana · Media").count();
+  log(
+    habitTpl > 0 ? "✅" : "❌",
+    "Hábito creado: instancia '0/3 días' y plantilla 'Hábito · 3 días/semana' en Recurrentes",
+  );
+
+  // 7c. Marcar el check de hoy desde el dashboard → 1/3 y +25 XP (10→35).
+  // Se asserta XP y no monedas: el botín (aleatorio) solo toca monedas.
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Completar hoy Leer un rato/ }).click();
+  await page.getByText("1/3 días").first().waitFor({ timeout: 10000 });
+  await page.getByText("35 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
+  log("✅", "Check de hábito → progreso 1/3 días y +25 XP en el header");
+  await page.screenshot({ path: `${SHOT_DIR}/08-habito-marcado.png` });
+
+  // 🔍 7d. Desmarcar el check de hoy devuelve el asiento (XP 35→10)
+  await page.getByRole("button", { name: /Desmarcar hoy Leer un rato/ }).click();
+  await page.getByText("10 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
+  const zeroDays = await page.getByText("0/3 días").count();
+  log(zeroDays > 0 ? "🔍" : "❌", "Desmarcar el check devuelve la XP y el progreso vuelve a 0/3");
+
+  // 7e. Re-marcar: quedará 1/3 al cierre (hábito fallido, no crítico)
+  await page.getByRole("button", { name: /Completar hoy Leer un rato/ }).click();
+  await page.getByText("35 / 100 XP", { exact: true }).waitFor({ timeout: 10000 });
+
+  // 7f. Módulo de gym: llegar desde /goals, crear ejercicio y registrar sesión
+  await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
+  await page.getByRole("link", { name: /Gimnasio/ }).click();
+  await page.waitForURL(`${BASE}/gym`);
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const exForm = page.locator("form", { has: page.getByRole("button", { name: "Crear ejercicio" }) });
+  await exForm.getByPlaceholder("Ej. Press banca").fill("Press banca");
+  await exForm.getByRole("button", { name: "Crear ejercicio" }).click();
+  await page.getByRole("button", { name: "Archivar" }).first().waitFor({ timeout: 10000 });
+
+  await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
+  const logForm = page.locator("form", { has: page.getByRole("button", { name: "Registrar sesión" }) });
+  await logForm.locator("select[name=exerciseId]").selectOption({ label: "Press banca" });
+  await logForm.locator("input[name=sets]").fill("4");
+  await logForm.locator("input[name=reps]").fill("8");
+  await logForm.locator("input[name=weightKg]").fill("60");
+  await logForm.getByRole("button", { name: "Registrar sesión" }).click();
+  await page.getByText("4×8 · 60 kg").first().waitFor({ timeout: 10000 });
+  const progCount = await page.getByText("1 sesión", { exact: true }).count();
+  log(
+    progCount > 0 ? "✅" : "❌",
+    "Sesión de gym registrada: visible en 'Esta semana' y en 'Progresión'",
+  );
+  await page.screenshot({ path: `${SHOT_DIR}/09-gym-sesion.png` });
+
+  // 🔍 7g. El registro de gym no toca XP/monedas (tracking puro)
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  const xpIntact = await page.getByText("35 / 100 XP", { exact: true }).count();
+  log(xpIntact > 0 ? "🔍" : "❌", "Registrar la sesión no cambió la XP del header (35/100)");
+
+  // 7h. Borrar la entrada la retira de la semana
+  await page.goto(`${BASE}/gym`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /Eliminar Press banca 4×8/ }).click();
+  await page.getByText("Sin sesiones esta semana.").waitFor({ timeout: 10000 });
+  log("✅", "Borrar la entrada de gym la quita de 'Esta semana'");
 
   // 8. Cierre manual de semana → el crítico (1/2 tareas) falla → penalización
   await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
@@ -202,6 +285,14 @@ try {
   await page.goto(`${BASE}/goals`, { waitUntil: "networkidle" });
   const failed = await page.getByText("✕ Fallido").count();
   log(failed > 0 ? "🔍" : "❌", "El objetivo crítico figura como '✕ Fallido' tras el cierre");
+
+  // 🔍 10b. El hábito con 1/3 días también cerró como fallido (sin penalización:
+  // no era crítico). Su tarjeta conserva el progreso.
+  const habitAfterClose = await page.getByText("1/3 días").count();
+  log(
+    habitAfterClose > 0 && failed >= 2 ? "🔍" : "❌",
+    "El hábito quedó '1/3 días · ✕ Fallido' tras el cierre",
+  );
 
   // 11. "Conseguido" retira el objetivo LP a la vitrina con su nivel final
   await page.getByRole("button", { name: "Conseguido" }).click();

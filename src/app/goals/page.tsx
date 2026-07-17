@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ensureCurrentWeek } from "@/lib/week";
 import { goalXpFrom, levelForXp, levelProgress } from "@/lib/gamification";
+import { habitCheckDays } from "@/lib/habits";
 import {
   archiveLongTermGoal,
   completeLongTermGoal,
@@ -9,6 +11,7 @@ import {
   createWeeklyGoal,
   deleteWeeklyGoal,
 } from "@/actions/goals";
+import { createHabitGoal } from "@/actions/habits";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { RecurringSection } from "@/components/goals/RecurringSection";
 import { TrophyCard } from "@/components/goals/TrophyCard";
@@ -141,7 +144,10 @@ export default async function GoalsPage() {
       <section className="space-y-3">
         <SectionTitle>Esta semana</SectionTitle>
         {weekly.map((g) => {
-          const done = g.tasks.filter((t) => t.completedAt).length;
+          const isHabit = g.targetDays !== null;
+          const done = isHabit
+            ? habitCheckDays(g.tasks).size
+            : g.tasks.filter((t) => t.completedAt).length;
           const status = STATUS_LABEL[g.status] ?? STATUS_LABEL.ACTIVE;
           return (
             <Card key={g.id} className="rise-in">
@@ -157,14 +163,18 @@ export default async function GoalsPage() {
                   </p>
                   <p className="mt-1 text-xs text-muted">
                     {g.longTermGoal ? `${g.longTermGoal.title} · ` : ""}
-                    {g.tasks.length > 0
-                      ? `${done}/${g.tasks.length} tareas`
-                      : "Sin tareas"}{" "}
+                    {isHabit
+                      ? `${done}/${g.targetDays} días`
+                      : g.tasks.length > 0
+                        ? `${done}/${g.tasks.length} tareas`
+                        : "Sin tareas"}{" "}
                     · <span className={status.cls}>{status.text}</span>
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center">
-                  {g.status === "ACTIVE" && (
+                  {/* En hábitos el cierre es automático al llegar a la meta:
+                      un "Cumplido" manual duplicaría la recompensa. */}
+                  {g.status === "ACTIVE" && !isHabit && (
                     <form action={completeWeeklyGoal.bind(null, g.id)}>
                       <button
                         className="min-h-11 px-2 text-xs font-medium text-green"
@@ -223,6 +233,74 @@ export default async function GoalsPage() {
             <PrimaryButton type="submit">Crear objetivo semanal</PrimaryButton>
           </form>
         </AddDisclosure>
+        <AddDisclosure label="Nuevo hábito semanal">
+          <form action={createHabitGoal} className="space-y-3">
+            <Label>
+              Hábito
+              <TextInput name="title" required placeholder="Ej. Leer 20 min" />
+            </Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Label>
+                Días por semana
+                <Select name="targetDays" defaultValue="3">
+                  {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                    <option key={n} value={n}>
+                      {n} {n === 1 ? "día" : "días"}
+                    </option>
+                  ))}
+                </Select>
+              </Label>
+              <Label>
+                Dificultad
+                <Select name="habitDifficulty" defaultValue="MEDIUM">
+                  <option value="EASY">Fácil (+10 XP)</option>
+                  <option value="MEDIUM">Media (+25 XP)</option>
+                  <option value="HARD">Difícil (+50 XP)</option>
+                </Select>
+              </Label>
+            </div>
+            <Label>
+              Objetivo a largo plazo (opcional)
+              <Select name="longTermGoalId" defaultValue="">
+                <option value="">Ninguno</option>
+                {longTerm.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+              </Select>
+            </Label>
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="isCritical"
+                className="h-5 w-5 accent-[var(--red)]"
+              />
+              Crítico: si no se cumple, hay penalización
+            </label>
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="recurring"
+                defaultChecked
+                className="h-5 w-5 accent-[var(--violet)]"
+              />
+              🔁 Repetir cada semana
+            </label>
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input type="checkbox" name="isGym" className="h-5 w-5 accent-[var(--violet)]" />
+              🏋️ Es entrenamiento (enlaza con el gimnasio)
+            </label>
+            <PrimaryButton type="submit">Crear hábito</PrimaryButton>
+          </form>
+        </AddDisclosure>
+        <Link
+          href="/gym"
+          className="hud-chamfer-sm flex min-h-12 items-center justify-between border border-edge bg-surface px-4 text-sm font-medium"
+        >
+          <span>🏋️ Gimnasio — sesiones y progresión</span>
+          <span className="text-violet">→</span>
+        </Link>
       </section>
 
       <RecurringSection goals={recurringGoals} tasks={recurringTasks} />

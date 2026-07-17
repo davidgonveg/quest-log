@@ -118,6 +118,19 @@ describe("goalXpFrom", () => {
     ];
     expect(goalXpFrom(weeklyGoals)).toBe(50);
   });
+
+  it("los hábitos suman igual: sus checks son tasks completadas con xpReward", () => {
+    // Hábito "leer 3 días" cumplido: 3 checks de 25 XP + bonus de cierre (40).
+    const habit = {
+      status: "COMPLETED",
+      tasks: [
+        { completedAt: new Date(2026, 6, 13), xpReward: 25 },
+        { completedAt: new Date(2026, 6, 14), xpReward: 25 },
+        { completedAt: new Date(2026, 6, 16), xpReward: 25 },
+      ],
+    };
+    expect(goalXpFrom([habit])).toBe(115);
+  });
 });
 
 describe("rankFor", () => {

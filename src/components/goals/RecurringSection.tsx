@@ -20,6 +20,8 @@ interface TplGoal {
   id: string;
   title: string;
   isCritical: boolean;
+  targetDays: number | null;
+  habitDifficulty: string | null;
   active: boolean;
   longTermGoal: { title: string; icon: string | null } | null;
   tasks: TplTask[];
@@ -92,6 +94,11 @@ export function RecurringSection({ goals, tasks }: { goals: TplGoal[]; tasks: Tp
                 {!g.active && <PausedBadge />}
               </p>
               <p className="mt-1 text-xs text-muted">
+                {g.targetDays !== null
+                  ? `Hábito · ${g.targetDays} días/semana · ${
+                      DIFFICULTY_LABELS[g.habitDifficulty as Difficulty] ?? "Media"
+                    } · `
+                  : ""}
                 {g.isCritical ? "Crítico · " : ""}
                 {g.longTermGoal
                   ? `${g.longTermGoal.icon ? `${g.longTermGoal.icon} ` : ""}${g.longTermGoal.title}`

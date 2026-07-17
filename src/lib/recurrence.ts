@@ -1,4 +1,4 @@
-import { rewardsForDifficulty, type Difficulty } from "./gamification";
+import { rewardsForDifficulty, sanitizeDifficulty, type Difficulty } from "./gamification";
 
 // Plantillas de recurrencia → qué instanciar en una semana concreta.
 // Lógica pura (sin BD): la capa Prisma la aplica en week.ts (applyRecurrence).
@@ -16,6 +16,9 @@ export interface RecurringGoalTemplate {
   title: string;
   isCritical: boolean;
   longTermGoalId: string | null;
+  targetDays: number | null; // hábito: meta de días/semana; null = objetivo normal
+  habitDifficulty: string | null; // dificultad del check diario del hábito
+  isGym: boolean; // hábito de entrenamiento: enlaza con el módulo de gym
   active: boolean;
   tasks: RecurringTaskTemplate[];
 }
@@ -34,6 +37,9 @@ export interface PlannedGoal {
   title: string;
   isCritical: boolean;
   longTermGoalId: string | null;
+  targetDays: number | null;
+  habitDifficulty: Difficulty | null;
+  isGym: boolean;
   tasks: PlannedTask[];
 }
 
@@ -42,13 +48,8 @@ export interface RecurrencePlan {
   standaloneTasks: PlannedTask[];
 }
 
-const DIFFICULTIES: Difficulty[] = ["EASY", "MEDIUM", "HARD"];
-
 function toPlannedTask(t: RecurringTaskTemplate): PlannedTask {
-  // La plantilla guarda difficulty como String (SQLite sin enums): saneamos aquí.
-  const difficulty = DIFFICULTIES.includes(t.difficulty as Difficulty)
-    ? (t.difficulty as Difficulty)
-    : "MEDIUM";
+  const difficulty = sanitizeDifficulty(t.difficulty);
   const rewards = rewardsForDifficulty(difficulty);
   return {
     sourceRecurringId: t.id,
@@ -78,6 +79,10 @@ export function planRecurrence(input: {
       title: g.title,
       isCritical: g.isCritical,
       longTermGoalId: g.longTermGoalId,
+      targetDays: g.targetDays,
+      habitDifficulty:
+        g.habitDifficulty === null ? null : sanitizeDifficulty(g.habitDifficulty),
+      isGym: g.isGym,
       tasks: g.tasks.filter((t) => t.active).map(toPlannedTask),
     }));
 

@@ -62,10 +62,28 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   `ensureCurrentWeek()` se llama al cargar cada página: **cierre perezoso** de
   semanas vencidas (no hay cron) + creación de la actual.
 - **Cierre de semana**: objetivos semanales ACTIVE con todas sus tareas hechas →
-  COMPLETED; el resto → FAILED. Cada crítico fallido resta XP/monedas
-  (configurable, recortado para no dejar saldos negativos) y genera un mensaje
-  duro de `messages.ts`. **Los mensajes son deliberadamente severos — no
-  suavizarlos.**
+  COMPLETED (los hábitos, con checks en ≥ `targetDays` días); el resto → FAILED.
+  Cada crítico fallido resta XP/monedas (configurable, recortado para no dejar
+  saldos negativos) y genera un mensaje duro de `messages.ts`. **Los mensajes
+  son deliberadamente severos — no suavizarlos.**
+- **Hábitos con meta semanal** 📅: `WeeklyGoal`/`RecurringGoal` con `targetDays`
+  (1-7) y `habitDifficulty`. Cada check diario es una **Task real** creada ya
+  completada al marcar (`toggleHabitCheck`), con `dueDay null` (ni bloquea ni
+  dispara el día perfecto) y recompensas congeladas de `habitDifficulty`; racha
+  y botín aplican como a cualquier tarea, y los checks extra por encima de la
+  meta siguen premiando (aunque no inflan el % semanal: `weekCounts`). Solo el
+  check de HOY es marcable/desmarcable; desmarcar devuelve el asiento y borra
+  la task. A los hábitos no se les cuelgan tareas manuales y sus checks nunca
+  se listan como tareas sueltas. Lógica pura en `habits.ts` (testeada).
+- **Gimnasio** 🏋️ (página satélite `/gym`; como `/tasks`, sin tab propio: la
+  nav ilumina su tab madre vía `PARENT_TAB` en `BottomNav`): catálogo
+  `Exercise` (se archiva, nunca se borra: preserva historial) y registro
+  `GymEntry` (una fila por ejercicio y sesión: series×reps×peso; peso null =
+  corporal; solo días de la semana actual hasta hoy). **Tracking puro**: sin
+  XP, monedas ni ledger — el hábito marcado `isGym` ya recompensa el día y su
+  fila enlaza «Registrar sesión →» al marcar el check. Progresión por ejercicio
+  derivada en lectura (`gym.ts`, puro: mejor peso y volumen por sesión;
+  sparkline SVG propio sin animación).
 - **Resumen semanal "Wrapped"** 📊: al cerrarse una semana, el dashboard muestra
   un resumen (`WeekSummary`) hasta descartarlo (`summarySeen`): XP/monedas
   ganadas, tareas hechas, mejor día, objetivos logrados/fallados y, si la semana

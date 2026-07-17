@@ -52,6 +52,9 @@ model WeeklyGoal {
   title             String
   isCritical        Boolean        @default(false)
   status            String         @default("ACTIVE")
+  targetDays        Int? // hábito: meta de días/semana (1-7); null = objetivo normal
+  habitDifficulty   String? // EASY | MEDIUM | HARD del check diario del hábito
+  isGym             Boolean        @default(false) // hábito de entrenamiento (enlaza con /gym)
   sourceRecurringId String? // plantilla origen: idempotencia al instanciar
   sourceRecurring   RecurringGoal? @relation(fields: [sourceRecurringId], references: [id], onDelete: SetNull)
   tasks             Task[]
@@ -115,15 +118,43 @@ model Setting {
 // pendiente: cada semana nueva se instancia como WeeklyGoal normal.
 // active=false = en pausa (no se instancia, las instancias pasadas quedan).
 model RecurringGoal {
-  id             String          @id @default(cuid())
-  title          String
-  isCritical     Boolean         @default(false)
-  longTermGoalId String?
-  longTermGoal   LongTermGoal?   @relation(fields: [longTermGoalId], references: [id], onDelete: SetNull)
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  tasks          RecurringTask[]
-  instances      WeeklyGoal[]
+  id              String          @id @default(cuid())
+  title           String
+  isCritical      Boolean         @default(false)
+  longTermGoalId  String?
+  longTermGoal    LongTermGoal?   @relation(fields: [longTermGoalId], references: [id], onDelete: SetNull)
+  targetDays      Int? // hábito: meta de días/semana (1-7); null = objetivo normal
+  habitDifficulty String? // EASY | MEDIUM | HARD del check diario del hábito
+  isGym           Boolean         @default(false) // hábito de entrenamiento (enlaza con /gym)
+  active          Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  tasks           RecurringTask[]
+  instances       WeeklyGoal[]
+}
+
+// Catálogo de ejercicios del usuario. Sin borrado: archivar preserva el
+// historial (archived=true solo lo saca del formulario de registro).
+model Exercise {
+  id          String     @id @default(cuid())
+  name        String
+  muscleGroup String? // texto libre: "Pecho", "Espalda"…
+  archived    Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  entries     GymEntry[]
+}
+
+// Registro de gym: una fila por ejercicio y sesión (series a distinto peso =
+// varias filas). Tracking puro: sin relación con Task ni con el ledger.
+model GymEntry {
+  id         String   @id @default(cuid())
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  date       DateTime // día de la sesión, 00:00 hora local
+  sets       Int
+  reps       Int
+  weightKg   Float? // null = peso corporal
+  note       String?
+  createdAt  DateTime @default(now())
 }
 
 // Plantilla de tarea. recurringGoalId null = tarea suelta recurrente.

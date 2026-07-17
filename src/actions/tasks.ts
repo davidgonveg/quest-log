@@ -75,6 +75,7 @@ export interface ToggleResult {
   loot: number; // monedas de botín concedidas (0 si no cayó)
   perfectDay: boolean; // se cerró el día perfecto en esta acción
   levelUp: number | null; // nuevo nivel de jugador si subió, si no null
+  habitCompleted?: boolean; // el check alcanzó justo la meta semanal del hábito
 }
 
 const perfectDayRefId = (weekId: string, day: number) => `perfect:${weekId}:${day}`;

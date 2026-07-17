@@ -5,9 +5,10 @@ import { useOptimistic, useTransition } from "react";
 import { toggleTask } from "@/actions/tasks";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { useCelebrate } from "@/components/celebration/CelebrationProvider";
+import { QuickAddTask } from "@/components/dashboard/QuickAddTask";
 import { TaskRow, type TaskItemData } from "@/components/tasks/TaskRow";
 
-export function TodayTasks({ tasks }: { tasks: TaskItemData[] }) {
+export function TodayTasks({ tasks, today }: { tasks: TaskItemData[]; today: number }) {
   const celebrate = useCelebrate();
   const [, startTransition] = useTransition();
   const [optimistic, setOptimistic] = useOptimistic(
@@ -27,7 +28,7 @@ export function TodayTasks({ tasks }: { tasks: TaskItemData[] }) {
 
       {optimistic.length === 0 ? (
         <p className="mt-3 text-sm text-muted">
-          Nada para hoy. Añade tareas desde la pestaña Objetivos.
+          Nada para hoy. Apúntala aquí abajo o revisa la semana completa.
         </p>
       ) : (
         <ul className="mt-2 divide-y divide-edge">
@@ -46,6 +47,8 @@ export function TodayTasks({ tasks }: { tasks: TaskItemData[] }) {
           ))}
         </ul>
       )}
+
+      <QuickAddTask today={today} />
     </Card>
   );
 }
