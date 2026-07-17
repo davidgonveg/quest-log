@@ -68,24 +68,33 @@ Un solo servicio Next.js. Sin API REST: **Server Actions + RSC**.
   son deliberadamente severos — no suavizarlos.**
 - **Hábitos con meta semanal** 📅: `WeeklyGoal`/`RecurringGoal` con `targetDays`
   (1-7) y `habitDifficulty`. Cada check diario es una **Task real** creada ya
-  completada al marcar (`toggleHabitCheck`), con `dueDay null` (ni bloquea ni
-  dispara el día perfecto) y recompensas congeladas de `habitDifficulty`; racha
-  y botín aplican como a cualquier tarea, y los checks extra por encima de la
-  meta siguen premiando (aunque no inflan el % semanal: `weekCounts`). Solo el
-  check de HOY es marcable/desmarcable; desmarcar devuelve el asiento y borra
-  la task. A los hábitos no se les cuelgan tareas manuales y sus checks nunca
+  completada, con `dueDay null` (ni bloquea ni dispara el día perfecto) y
+  recompensas congeladas de `habitDifficulty`; racha y botín aplican como a
+  cualquier tarea, y los checks extra por encima de la meta siguen premiando
+  (aunque no inflan el % semanal: `weekCounts`). La creación del check vive en
+  `lib/habit-check.ts` (`completeHabitCheck(goalId, when)`): la comparten el
+  toggle de hoy (`toggleHabitCheck`) y el registro de gym (checks de días
+  pasados). `when` fija el día vía `completedAt`, pero racha/botín se calculan
+  con la fecha actual (el ledger no se reescribe hacia atrás). Desde el toggle
+  solo el check de HOY es marcable/desmarcable; desmarcar devuelve el asiento y
+  borra la task. La meta de días se puede editar en la plantilla recurrente
+  (`updateRecurringHabitDays`, aplica también a la instancia ACTIVE de la
+  semana). A los hábitos no se les cuelgan tareas manuales y sus checks nunca
   se listan como tareas sueltas. Lógica pura en `habits.ts` (testeada).
 - **Gimnasio** 🏋️ (página satélite `/gym`; como `/tasks`, sin tab propio: la
   nav ilumina su tab madre vía `PARENT_TAB` en `BottomNav`): catálogo
   `Exercise` (se archiva, nunca se borra: preserva historial) y registro
   `GymEntry` (una fila por ejercicio y sesión: series×reps×peso; peso null =
-  corporal; solo días de la semana actual hasta hoy). **Tracking puro**: sin
-  XP, monedas ni ledger — el hábito marcado `isGym` ya recompensa el día y su
-  fila enlaza «Registrar sesión →» al marcar el check. Elegir ejercicio en el
-  registro **precarga la última sesión** (`latestEntry`, puro) o, si no hay,
-  el objetivo de la rutina (`targetSets`/`targetReps`, `repsLowerBound`).
-  Progresión por ejercicio derivada en lectura (`gym.ts`, puro: mejor peso y
-  volumen por sesión; sparkline SVG propio sin animación).
+  corporal; solo días de la semana actual hasta hoy). El registro en sí es
+  **tracking puro** (sin XP/monedas/ledger), con una excepción: `logGymEntry`
+  **marca ese día como entrenado** en el hábito `isGym` activo si aún no tenía
+  check (`completeHabitCheck`) — apuntar el entreno de ayer cuenta como que
+  ayer entrenaste (y sí concede sus recompensas). La fila del hábito enlaza
+  «Registrar sesión →» al marcar el check. Elegir ejercicio en el registro
+  **precarga la última sesión** (`latestEntry`, puro) o, si no hay, el objetivo
+  de la rutina (`targetSets`/`targetReps`, `repsLowerBound`). Progresión por
+  ejercicio derivada en lectura (`gym.ts`, puro: mejor peso y volumen por
+  sesión; sparkline SVG propio sin animación).
 - **Resumen semanal "Wrapped"** 📊: al cerrarse una semana, el dashboard muestra
   un resumen (`WeekSummary`) hasta descartarlo (`summarySeen`): XP/monedas
   ganadas, tareas hechas, mejor día, objetivos logrados/fallados y, si la semana

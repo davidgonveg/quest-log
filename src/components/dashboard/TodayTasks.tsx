@@ -1,21 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useOptimistic, useTransition } from "react";
-import { toggleTask } from "@/actions/tasks";
+import { useState, useOptimistic, useTransition } from "react";
+import { deleteTask, toggleTask } from "@/actions/tasks";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { useCelebrate } from "@/components/celebration/CelebrationProvider";
-import { QuickAddTask } from "@/components/dashboard/QuickAddTask";
+import { QuickAddTask, type GoalOption } from "@/components/dashboard/QuickAddTask";
+import { EditTaskDialog } from "@/components/tasks/EditTaskDialog";
 import { TaskRow, type TaskItemData } from "@/components/tasks/TaskRow";
 
-export function TodayTasks({ tasks, today }: { tasks: TaskItemData[]; today: number }) {
+export function TodayTasks({
+  tasks,
+  today,
+  goals,
+}: {
+  tasks: TaskItemData[];
+  today: number;
+  goals: GoalOption[];
+}) {
   const celebrate = useCelebrate();
   const [, startTransition] = useTransition();
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [optimistic, setOptimistic] = useOptimistic(
     tasks,
-    (state, taskId: string) =>
-      state.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t)),
+    (state, action: { type: "toggle" | "delete"; id: string }) =>
+      action.type === "delete"
+        ? state.filter((t) => t.id !== action.id)
+        : state.map((t) =>
+            t.id === action.id ? { ...t, completed: !t.completed } : t,
+          ),
   );
+
+  const editing = optimistic.find((t) => t.id === editingId) ?? null;
 
   return (
     <Card className="rise-in">
@@ -38,8 +54,15 @@ export function TodayTasks({ tasks, today }: { tasks: TaskItemData[]; today: num
                 task={t}
                 onToggle={(id) =>
                   startTransition(async () => {
-                    setOptimistic(id);
+                    setOptimistic({ type: "toggle", id });
                     celebrate(await toggleTask(id));
+                  })
+                }
+                onEdit={(id) => setEditingId(id)}
+                onDelete={(id) =>
+                  startTransition(async () => {
+                    setOptimistic({ type: "delete", id });
+                    await deleteTask(id);
                   })
                 }
               />
@@ -48,7 +71,11 @@ export function TodayTasks({ tasks, today }: { tasks: TaskItemData[]; today: num
         </ul>
       )}
 
-      <QuickAddTask today={today} />
+      <QuickAddTask today={today} goals={goals} />
+
+      {editing && (
+        <EditTaskDialog task={editing} goals={goals} onClose={() => setEditingId(null)} />
+      )}
     </Card>
   );
 }

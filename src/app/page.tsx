@@ -61,9 +61,15 @@ export default async function Dashboard() {
       coinReward: t.coinReward,
       completed: t.completedAt !== null,
       goalTitle: t.weeklyGoal?.title ?? null,
+      weeklyGoalId: t.weeklyGoalId,
       dueDay: t.dueDay,
       streakBonus: coinsWithStreak(t.coinReward, streak.ifCompletedNow) - t.coinReward,
     }));
+
+  // Objetivos semanales normales (no hábitos) a los que se puede colgar una tarea.
+  const assignableGoals = fullWeek.weeklyGoals
+    .filter((g) => g.targetDays === null)
+    .map((g) => ({ id: g.id, title: g.title }));
 
   const goals = fullWeek.weeklyGoals.map((g) => ({
     id: g.id,
@@ -101,7 +107,7 @@ export default async function Dashboard() {
 
       <HabitList habits={habits} today={today} />
 
-      <TodayTasks tasks={todayTasks} today={today} />
+      <TodayTasks tasks={todayTasks} today={today} goals={assignableGoals} />
     </div>
   );
 }

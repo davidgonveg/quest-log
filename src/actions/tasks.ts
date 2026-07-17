@@ -68,6 +68,54 @@ export async function deleteTask(taskId: string): Promise<void> {
   revalidatePath("/goals");
 }
 
+// Edita una tarea existente: título, día, objetivo semanal y —solo si sigue
+// pendiente— dificultad. Con la tarea ya completada, sus recompensas están
+// congeladas y cobradas en el ledger: cambiar la dificultad las descuadraría,
+// así que se ignora ese campo (la UI también lo bloquea). No se permite colgar
+// una tarea de un objetivo-hábito (sus tareas son solo checks).
+export async function updateTask(formData: FormData): Promise<void> {
+  const taskId = String(formData.get("taskId") ?? "");
+  if (!taskId) return;
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return;
+
+  const task = await prisma.task.findUniqueOrThrow({ where: { id: taskId } });
+
+  const dueDayRaw = String(formData.get("dueDay") ?? "");
+  const parsedDue = dueDayRaw === "" ? null : parseInt(dueDayRaw, 10);
+  const dueDay = parsedDue !== null && parsedDue >= 0 && parsedDue <= 6 ? parsedDue : null;
+
+  const rawGoalId = String(formData.get("weeklyGoalId") ?? "");
+  let weeklyGoalId: string | null = rawGoalId || null;
+  if (weeklyGoalId) {
+    const goal = await prisma.weeklyGoal.findUnique({ where: { id: weeklyGoalId } });
+    if (!goal || goal.targetDays !== null) weeklyGoalId = null; // no colgar de un hábito
+  }
+
+  const data: {
+    title: string;
+    dueDay: number | null;
+    weeklyGoalId: string | null;
+    difficulty?: Difficulty;
+    xpReward?: number;
+    coinReward?: number;
+  } = { title, dueDay, weeklyGoalId };
+
+  if (!task.completedAt) {
+    const rawDifficulty = String(formData.get("difficulty") ?? task.difficulty) as Difficulty;
+    const difficulty = DIFFICULTIES.includes(rawDifficulty) ? rawDifficulty : "MEDIUM";
+    const rewards = rewardsForDifficulty(difficulty);
+    data.difficulty = difficulty;
+    data.xpReward = rewards.xp;
+    data.coinReward = rewards.coins;
+  }
+
+  await prisma.task.update({ where: { id: taskId }, data });
+  revalidatePath("/");
+  revalidatePath("/tasks");
+  revalidatePath("/goals");
+}
+
 // Lo que ocurrió al alternar, para que la UI celebre (botín, día perfecto,
 // subida de nivel). Todo lo demás ya lo refleja la revalidación.
 export interface ToggleResult {
