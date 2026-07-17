@@ -9,10 +9,14 @@ const H = 40;
 export function ExerciseProgress({
   name,
   muscleGroup,
+  targetSets,
+  targetReps,
   rows,
 }: {
   name: string;
   muscleGroup: string | null;
+  targetSets: number | null;
+  targetReps: string | null;
   rows: ProgressionRow[];
 }) {
   const series = rows
@@ -33,6 +37,11 @@ export function ExerciseProgress({
         </span>
       </summary>
       <div className="space-y-3 border-t border-edge p-4">
+        {targetSets != null && (
+          <p className="text-xs text-muted">
+            Objetivo de la rutina: {targetSets}×{targetReps ?? "—"}
+          </p>
+        )}
         {series.length >= 2 && (
           <div>
             {/* Margen en el viewBox para que el trazo de 2px no se recorte. */}

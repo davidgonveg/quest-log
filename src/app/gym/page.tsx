@@ -2,12 +2,13 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { ensureCurrentWeek } from "@/lib/week";
 import { groupEntriesByDay, progressionFor } from "@/lib/gym";
-import { DAY_NAMES, dayIndex } from "@/lib/week-logic";
-import { createExercise, logGymEntry, toggleExerciseArchived } from "@/actions/gym";
+import { dayIndex } from "@/lib/week-logic";
+import { createExercise, toggleExerciseArchived } from "@/actions/gym";
 import { GymWeek } from "@/components/gym/GymWeek";
+import { GymLogForm } from "@/components/gym/GymLogForm";
 import { ExerciseProgress } from "@/components/gym/ExerciseProgress";
 import { SectionTitle } from "@/components/ui/Card";
-import { AddDisclosure, Label, PrimaryButton, Select, TextInput } from "@/components/ui/Form";
+import { AddDisclosure, Label, PrimaryButton, TextInput } from "@/components/ui/Form";
 
 export const dynamic = "force-dynamic";
 
@@ -48,52 +49,16 @@ export default async function GymPage() {
             Primero crea un ejercicio en «Gestionar ejercicios», aquí abajo.
           </p>
         ) : (
-          <form action={logGymEntry} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <Label>
-                Ejercicio
-                <Select name="exerciseId" required defaultValue="">
-                  <option value="" disabled>
-                    Elegir…
-                  </option>
-                  {available.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name}
-                    </option>
-                  ))}
-                </Select>
-              </Label>
-              <Label>
-                Día
-                <Select name="day" defaultValue={today}>
-                  {DAY_NAMES.slice(0, today + 1).map((d, i) => (
-                    <option key={d} value={i}>
-                      {i === today ? `Hoy (${d})` : d}
-                    </option>
-                  ))}
-                </Select>
-              </Label>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <Label>
-                Series
-                <TextInput name="sets" type="number" min={1} required placeholder="4" />
-              </Label>
-              <Label>
-                Reps
-                <TextInput name="reps" type="number" min={1} required placeholder="8" />
-              </Label>
-              <Label>
-                Peso (kg)
-                <TextInput name="weightKg" inputMode="decimal" placeholder="60" />
-              </Label>
-            </div>
-            <Label>
-              Nota (opcional)
-              <TextInput name="note" placeholder="Ej. subí 2,5 kg, PR" />
-            </Label>
-            <PrimaryButton type="submit">Registrar sesión</PrimaryButton>
-          </form>
+          <GymLogForm
+            exercises={available.map((e) => ({
+              id: e.id,
+              name: e.name,
+              muscleGroup: e.muscleGroup,
+              targetSets: e.targetSets,
+              targetReps: e.targetReps,
+            }))}
+            today={today}
+          />
         )}
       </AddDisclosure>
 
@@ -105,6 +70,8 @@ export default async function GymPage() {
               key={e.id}
               name={e.name}
               muscleGroup={e.muscleGroup}
+              targetSets={e.targetSets}
+              targetReps={e.targetReps}
               rows={e.rows}
             />
           ))}
@@ -120,6 +87,12 @@ export default async function GymPage() {
                   <p className={`min-w-0 truncate text-sm ${e.archived ? "text-muted" : ""}`}>
                     {e.name}
                     {e.muscleGroup && <span className="text-muted"> · {e.muscleGroup}</span>}
+                    {e.targetSets != null && (
+                      <span className="text-muted">
+                        {" "}
+                        · {e.targetSets}×{e.targetReps ?? "—"}
+                      </span>
+                    )}
                   </p>
                   <form action={toggleExerciseArchived.bind(null, e.id)}>
                     <button className="min-h-11 shrink-0 px-2 text-xs font-medium text-violet">
@@ -138,7 +111,17 @@ export default async function GymPage() {
               </Label>
               <Label>
                 Grupo (opcional)
-                <TextInput name="muscleGroup" placeholder="Pecho" />
+                <TextInput name="muscleGroup" placeholder="Torso A" />
+              </Label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Label>
+                Series objetivo (opcional)
+                <TextInput name="targetSets" type="number" min={1} placeholder="4" />
+              </Label>
+              <Label>
+                Reps objetivo (opcional)
+                <TextInput name="targetReps" placeholder="6-8" />
               </Label>
             </div>
             <PrimaryButton type="submit">Crear ejercicio</PrimaryButton>

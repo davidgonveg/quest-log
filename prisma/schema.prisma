@@ -137,7 +137,9 @@ model RecurringGoal {
 model Exercise {
   id          String     @id @default(cuid())
   name        String
-  muscleGroup String? // texto libre: "Pecho", "Espalda"…
+  muscleGroup String? // texto libre: bloque de rutina ("Torso A") o grupo muscular
+  targetSets  Int? // objetivo de la rutina: series…
+  targetReps  String? // …y reps ("6-8", "20-30 seg"); precargan el registro
   archived    Boolean    @default(false)
   createdAt   DateTime   @default(now())
   entries     GymEntry[]

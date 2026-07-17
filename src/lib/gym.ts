@@ -54,6 +54,13 @@ export function progressionFor(entries: GymEntryRow[]): ProgressionRow[] {
     });
 }
 
+// Primer número del objetivo de reps ("6-8" → 6, "20-30 seg" → 20): valor
+// con el que se precarga el formulario de registro al elegir el ejercicio.
+export function repsLowerBound(targetReps: string | null | undefined): number | null {
+  const match = targetReps?.match(/\d+/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
 // Puntos "x,y x,y…" de un polyline SVG normalizado al ancho/alto dados.
 // Serie plana (o un solo valor) → línea/punto a media altura.
 export function sparklinePoints(values: number[], width: number, height: number): string {

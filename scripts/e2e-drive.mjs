@@ -18,9 +18,19 @@ const page = await browser.newPage({
 });
 
 try {
-  // 1. Dashboard inicial: usuario auto-creado, nivel 1, 0 monedas
+  // 1. Dashboard inicial: usuario auto-creado, nivel 1, 0 monedas.
+  // GUARDA: si la BD no está virgen, abortar ANTES de escribir nada. Si el
+  // puerto 3000 lo ocupa otra instancia (p. ej. el contenedor de producción
+  // con datos reales), el dev server salta en silencio a otro puerto y este
+  // script escribiría datos de prueba donde no debe.
   await page.goto(BASE, { waitUntil: "networkidle" });
   const header = await page.locator("header").innerText();
+  if (!header.includes("0 / 100 XP")) {
+    throw new Error(
+      `BD no virgen en ${BASE} (header: ${JSON.stringify(header.replace(/\n/g, " | "))}). ` +
+        "¿Ocupa el puerto 3000 otra instancia con datos reales? Abortado sin escribir.",
+    );
+  }
   log(
     header.includes("Nivel") && header.includes("Aventurero") ? "✅" : "❌",
     `Dashboard inicial → header: ${JSON.stringify(header.replace(/\n/g, " | "))}`,
@@ -229,14 +239,27 @@ try {
   await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
   const exForm = page.locator("form", { has: page.getByRole("button", { name: "Crear ejercicio" }) });
   await exForm.getByPlaceholder("Ej. Press banca").fill("Press banca");
+  await exForm.getByPlaceholder("Torso A").fill("Torso A");
+  await exForm.locator("input[name=targetSets]").fill("4");
+  await exForm.getByPlaceholder("6-8").fill("8-10");
   await exForm.getByRole("button", { name: "Crear ejercicio" }).click();
   await page.getByRole("button", { name: "Archivar" }).first().waitFor({ timeout: 10000 });
 
   await page.locator("details").evaluateAll((els) => els.forEach((e) => (e.open = true)));
   const logForm = page.locator("form", { has: page.getByRole("button", { name: "Registrar sesión" }) });
   await logForm.locator("select[name=exerciseId]").selectOption({ label: "Press banca" });
-  await logForm.locator("input[name=sets]").fill("4");
-  await logForm.locator("input[name=reps]").fill("8");
+  // La precarga del objetivo es estado de React: esperar a que aterrice.
+  await page
+    .waitForFunction(() => document.querySelector("input[name=sets]")?.value === "4", null, {
+      timeout: 5000,
+    })
+    .catch(() => {});
+  const prefSets = await logForm.locator("input[name=sets]").inputValue();
+  const prefReps = await logForm.locator("input[name=reps]").inputValue();
+  log(
+    prefSets === "4" && prefReps === "8" ? "✅" : "❌",
+    `Elegir el ejercicio precarga su objetivo 4×8-10 (series ${prefSets}, reps ${prefReps})`,
+  );
   await logForm.locator("input[name=weightKg]").fill("60");
   await logForm.getByRole("button", { name: "Registrar sesión" }).click();
   await page.getByText("4×8 · 60 kg").first().waitFor({ timeout: 10000 });
