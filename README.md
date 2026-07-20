@@ -12,12 +12,68 @@ Mobile-first (PWA instalable), modo oscuro nativo, un solo usuario, sin cuentas.
 docker compose up -d --build
 ```
 
-Abre **http://localhost:3000** (o `http://<ip-del-servidor>:3000` desde el
-móvil). El primer arranque crea tu perfil y unos premios de ejemplo; la base de
-datos vive en el volumen `quest-data` y sobrevive a reinicios y rebuilds.
+Abre **http://localhost:3000**. El primer arranque crea tu perfil y unos premios
+de ejemplo; la base de datos vive en el volumen `quest-data` y sobrevive a
+reinicios y rebuilds.
 
-Para instalarla como app en el móvil: abre la URL en el navegador → menú →
-"Añadir a pantalla de inicio".
+## Instalar en el móvil
+
+La app es una PWA instalable, pero **no funciona sin el servidor**: el service
+worker (`public/sw.js`) es mínimo y no cachea nada offline. El equipo que la
+sirve tiene que estar encendido siempre que quieras abrirla.
+
+### 1. Haz accesible el puerto 3000 en la red local
+
+Averigua la IP del equipo servidor:
+
+```powershell
+ipconfig            # Windows: "Dirección IPv4" del adaptador WiFi/Ethernet
+```
+
+```bash
+ip addr | grep inet  # Linux/macOS
+```
+
+En Windows, el firewall bloquea el 3000 desde otros dispositivos. Abre una
+PowerShell **como administrador**, una sola vez:
+
+```powershell
+New-NetFirewallRule -DisplayName "Quest Log" -Direction Inbound `
+  -LocalPort 3000 -Protocol TCP -Action Allow -Profile Private
+```
+
+> `-Profile Private` limita la regla a redes marcadas como privadas: en una WiFi
+> pública el puerto sigue cerrado. Si no conecta, revisa que tu red doméstica
+> esté clasificada como privada (`Get-NetConnectionProfile`).
+
+### 2. Añádela a la pantalla de inicio
+
+Con el móvil en la **misma WiFi**, abre `http://<ip-del-servidor>:3000`.
+
+- **iPhone/iPad (Safari)** — Compartir → *Añadir a pantalla de inicio*. Queda
+  como app real: pantalla completa, sin barra de navegador, icono y fondo
+  propios. Tiene que ser Safari; desde Chrome en iOS el resultado es peor.
+- **Android (Chrome)** — menú ⋮ → *Añadir a pantalla de inicio*. Por `http://`
+  a una IP local Chrome **no** considera el sitio contexto seguro, así que no
+  registra el service worker ni ofrece *Instalar aplicación*: obtienes un acceso
+  directo que abre Chrome con su barra, no la experiencia standalone. Para la
+  instalación completa necesitas HTTPS (siguiente sección).
+
+### 3. HTTPS y acceso desde fuera de casa (opcional)
+
+Resuelve de una vez la instalación completa en Android y el uso con datos
+móviles, sin exponer nada a internet público. Con [Tailscale](https://tailscale.com)
+instalado en el servidor y en el móvil (misma cuenta), en el servidor:
+
+```bash
+tailscale serve --bg 3000
+```
+
+Te devuelve una URL `https://<equipo>.<tailnet>.ts.net` con certificado válido.
+Ábrela desde el móvil y Chrome ya ofrece *Instalar aplicación*. Requiere tener
+MagicDNS y los certificados HTTPS activados en la consola de Tailscale
+(Settings → DNS). Con esto puedes saltarte el paso 1: el tráfico va por la VPN,
+no por el puerto 3000 abierto en la red local.
 
 ## Cómo se juega
 
